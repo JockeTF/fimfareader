@@ -6,3 +6,17 @@ edition = "2018"
 
 [profile.release]
 lto = true
+
+[dependencies.chrono]
+version = "*"
+features = ["serde"]
+
+[dependencies.hex]
+version = "*"
+
+[dependencies.serde]
+version = "*"
+features = ["derive"]
+
+[dependencies.serde_json]
+version = "*"
