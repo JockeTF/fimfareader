@@ -1,5 +1,6 @@
 //! Main module.
 
+pub mod error;
 pub mod story;
 
 fn main() {
