@@ -1,7 +1,5 @@
 //! Story meta.
 
-use std::collections::BTreeMap;
-
 use chrono::prelude::*;
 use serde::de::Error;
 use serde::{Deserialize, Deserializer};
@@ -53,7 +51,7 @@ pub struct Archive {
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct Author {
-    pub avatar: Option<BTreeMap<String, String>>,
+    pub avatar: Option<Avatar>,
     pub bio_html: Option<String>,
     pub date_joined: Option<DateTime<Utc>>,
     #[serde(deserialize_with = "string_to_id")]
@@ -63,6 +61,34 @@ pub struct Author {
     pub num_followers: Option<i32>,
     pub num_stories: Option<i32>,
     pub url: String,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+pub struct Avatar {
+    #[serde(rename = "16")]
+    pub x16: Option<String>,
+    #[serde(rename = "32")]
+    pub x32: Option<String>,
+    #[serde(rename = "48")]
+    pub x48: Option<String>,
+    #[serde(rename = "64")]
+    pub x64: Option<String>,
+    #[serde(rename = "96")]
+    pub x96: Option<String>,
+    #[serde(rename = "128")]
+    pub x128: Option<String>,
+    #[serde(rename = "160")]
+    pub x160: Option<String>,
+    #[serde(rename = "192")]
+    pub x192: Option<String>,
+    #[serde(rename = "256")]
+    pub x256: Option<String>,
+    #[serde(rename = "320")]
+    pub x320: Option<String>,
+    #[serde(rename = "384")]
+    pub x384: Option<String>,
+    #[serde(rename = "512")]
+    pub x512: Option<String>,
 }
 
 #[derive(Clone, Debug, Deserialize)]
