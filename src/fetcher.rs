@@ -67,14 +67,14 @@ where
         parse(BufReader::with_capacity(8_000_000, file))
     }
 
-    pub fn fetch<'a>(&'a self, key: i64) -> Option<&'a Story> {
+    pub fn fetch(&self, key: i64) -> Option<&Story> {
         match self.index.binary_search_by_key(&key, |story| story.id) {
             Ok(i) => self.index.get(i),
             Err(_) => None,
         }
     }
 
-    pub fn read<'a>(&self, path: &str) -> Result<Vec<u8>> {
+    pub fn read(&self, path: &str) -> Result<Vec<u8>> {
         use Error::*;
         use ZipError::*;
 
@@ -96,7 +96,7 @@ where
         Ok(buf)
     }
 
-    pub fn iter<'a>(&'a self) -> impl Iterator<Item = &'a Story> {
+    pub fn iter(&self) -> impl Iterator<Item = &Story> {
         self.index.iter()
     }
 }

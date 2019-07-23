@@ -170,9 +170,10 @@ impl<'de> Deserialize<'de> for Color {
     {
         let object = Value::deserialize(d)?;
 
-        let text = object["hex"]
-            .as_str()
-            .ok_or(Error::custom("Color is missing hex value."))?;
+        let text = object
+            .get("hex")
+            .and_then(|value| value.as_str())
+            .ok_or_else(|| Error::custom("Color is missing hex value."))?;
 
         let array = hex::decode(text).map_err(|e| match e {
             _ => Error::custom("Color hex has invalid value."),

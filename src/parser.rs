@@ -9,7 +9,7 @@ use serde_json::from_str;
 use crate::error::{Error, Result};
 use crate::story::Story;
 
-const TRIM: &'static [char] = &['"', ',', ' ', '\t', '\n', '\r'];
+const TRIM: &[char] = &['"', ',', ' ', '\t', '\n', '\r'];
 
 pub fn parse(reader: impl BufRead) -> Result<Vec<Story>> {
     use Error::*;
