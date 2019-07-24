@@ -213,7 +213,8 @@ impl<'de> Deserialize<'de> for Color {
 }
 
 impl CompletionStatus {
-    const FIELDS: &'static [&'static str] = &["cancelled", "complete", "hiatus", "incomplete"];
+    const FIELDS: &'static [&'static str] =
+        &["cancelled", "complete", "hiatus", "incomplete"];
 }
 
 impl<'de> Deserialize<'de> for CompletionStatus {
