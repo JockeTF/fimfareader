@@ -9,8 +9,8 @@ use zip::read::ZipArchive;
 use zip::result::ZipError;
 
 use crate::error::{Error, Result};
-use crate::parser::parse;
-use crate::story::Story;
+use super::parser::parse;
+use super::story::Story;
 
 pub struct Fetcher<T>
 where

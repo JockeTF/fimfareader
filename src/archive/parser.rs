@@ -7,7 +7,7 @@ use std::thread::spawn;
 use serde_json::from_str;
 
 use crate::error::{Error, Result};
-use crate::story::Story;
+use super::story::Story;
 
 const TRIM: &[char] = &['"', ',', ' ', '\t', '\n', '\r'];
 

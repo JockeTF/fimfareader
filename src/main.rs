@@ -1,15 +1,13 @@
 //! Main module.
 
+pub mod archive;
 pub mod error;
-pub mod fetcher;
-pub mod parser;
-pub mod story;
 
 use std::env::args;
 use std::time::Instant;
 
+use crate::archive::Fetcher;
 use crate::error::{Error, Result};
-use crate::fetcher::Fetcher;
 
 fn main() -> Result<()> {
     use Error::*;
