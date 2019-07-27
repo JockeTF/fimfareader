@@ -74,8 +74,10 @@ where
         }
     }
 
-    pub fn read(&self, path: &str) -> Result<Vec<u8>> {
+    pub fn read(&self, story: &Story) -> Result<Vec<u8>> {
         use ZipError::*;
+
+        let path = &story.archive.path;
 
         let mut archive = self.archive.lock().map_err(|e| match e {
             _ => Error::archive("Could not acquire fetcher lock"),
