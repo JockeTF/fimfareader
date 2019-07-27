@@ -182,10 +182,10 @@ where
         Ok(value.as_i64().unwrap())
     } else if value.is_string() {
         value.as_str().unwrap().parse().map_err(|e| match e {
-            _ => Error::custom("Could not parse ID string."),
+            _ => Error::custom("Could not parse ID string"),
         })
     } else {
-        Err(Error::custom("Invalid type for ID value."))
+        Err(Error::custom("Invalid type for ID value"))
     }
 }
 
@@ -199,15 +199,15 @@ impl<'de> Deserialize<'de> for Color {
         let text = object
             .get("hex")
             .and_then(|value| value.as_str())
-            .ok_or_else(|| Error::custom("Color is missing hex value."))?;
+            .ok_or_else(|| Error::custom("Color is missing hex value"))?;
 
         let array = hex::decode(text).map_err(|e| match e {
-            _ => Error::custom("Color hex has invalid value."),
+            _ => Error::custom("Color hex has invalid value"),
         })?;
 
         match array[..] {
             [red, green, blue] => Ok(Color { red, green, blue }),
-            _ => Err(Error::custom("Color hex has invalid length.")),
+            _ => Err(Error::custom("Color hex has invalid length")),
         }
     }
 }

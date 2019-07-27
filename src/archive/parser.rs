@@ -4,22 +4,21 @@ use std::io::BufRead;
 use std::sync::mpsc::{channel, Receiver};
 use std::thread::spawn;
 
+use serde::de::Error;
+use serde_json::error::Result;
 use serde_json::from_str;
 
-use crate::error::{Error, Result};
 use super::story::Story;
 
 const TRIM: &[char] = &['"', ',', ' ', '\t', '\n', '\r'];
 
 pub fn parse(reader: impl BufRead) -> Result<Vec<Story>> {
-    use Error::*;
-
     let (tx, rx) = channel();
     let rx = spawn_parser(rx);
 
     for line in reader.lines() {
         let line = line.map_err(|e| match e {
-            _ => SourceError("Could not read index line."),
+            _ => Error::custom("Could not read line"),
         })?;
 
         if tx.send(line).is_ok() {
@@ -27,8 +26,8 @@ pub fn parse(reader: impl BufRead) -> Result<Vec<Story>> {
         }
 
         return Err(match rx.recv() {
-            Err(_) => SourceError("Parser disappeared unexpectedly."),
-            Ok(Ok(_)) => SourceError("Parser returned unexpectedly."),
+            Err(_) => Error::custom("Parser disappeared unexpectedly"),
+            Ok(Ok(_)) => Error::custom("Parser returned unexpectedly"),
             Ok(Err(error)) => error,
         });
     }
@@ -36,13 +35,11 @@ pub fn parse(reader: impl BufRead) -> Result<Vec<Story>> {
     drop(tx);
 
     rx.recv().map_err(|e| match e {
-        _ => SourceError("Missing parser result."),
+        _ => Error::custom("Missing parser result"),
     })?
 }
 
 fn spawn_parser(stream: Receiver<String>) -> Receiver<Result<Vec<Story>>> {
-    use Error::*;
-
     let (tx, rx) = channel();
 
     spawn(move || {
@@ -68,11 +65,11 @@ fn spawn_parser(stream: Receiver<String>) -> Receiver<Result<Vec<Story>>> {
         stories.shrink_to_fit();
 
         if wrappers != "{}" {
-            return tx.send(Err(SourceError("Invalid index structure.")));
+            return tx.send(Err(Error::custom("Invalid file structure")));
         }
 
         if count != stories.len() {
-            return tx.send(Err(SourceError("Index contains duplicates.")));
+            return tx.send(Err(Error::custom("Found duplicate story")));
         }
 
         tx.send(Ok(stories))
@@ -82,8 +79,6 @@ fn spawn_parser(stream: Receiver<String>) -> Receiver<Result<Vec<Story>>> {
 }
 
 fn deserialize(line: String) -> Result<Story> {
-    use Error::*;
-
     let split = line
         .splitn(2, ':')
         .map(|value| value.trim_matches(TRIM))
@@ -91,19 +86,17 @@ fn deserialize(line: String) -> Result<Story> {
 
     let (skey, json) = match split[..] {
         [skey, json] => Ok((skey, json)),
-        _ => Err(SourceError("Invalid line format.")),
+        _ => Err(Error::custom("Invalid line format")),
     }?;
 
-    let key: i64 = skey.parse().map_err(|e| match e {
-        _ => SourceError("Invalid meta key."),
-    })?;
+    let story: Story = from_str(json)?;
 
-    let story: Story = from_str(json).map_err(|e| match e {
-        _ => SourceError("Invalid meta value."),
+    let key: i64 = skey.parse().map_err(|e| match e {
+        _ => Error::custom("Invalid line key"),
     })?;
 
     if key != story.id {
-        return Err(SourceError("Meta key mismatch."));
+        return Err(Error::custom("Line key mismatch"));
     }
 
     Ok(story)

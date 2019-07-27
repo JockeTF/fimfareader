@@ -7,26 +7,30 @@ use std::env::args;
 use std::time::Instant;
 
 use crate::archive::Fetcher;
-use crate::error::{Error, Result};
+use crate::error::Error;
 
-fn main() -> Result<()> {
-    use Error::*;
+fn exit(error: Error) -> ! {
+    eprintln!("{}", error);
 
+    std::process::exit(1)
+}
+
+fn main() {
     let argv = args().collect::<Vec<String>>();
 
-    let path = match argv.len() {
-        2 => Ok(argv.get(1).unwrap()),
-        _ => Err(UserError("Usage: fimfareader <ARCHIVE>")),
-    }?;
+    if argv.len() != 2 {
+        eprintln!("Usage: fimfareader <ARCHIVE>");
+        std::process::exit(1);
+    }
 
     println!("Hellopaca, World!");
 
     let start = Instant::now();
-    let fetcher = Fetcher::from(path)?;
+    let result = Fetcher::from(&argv[1]);
     let finish = Instant::now() - start;
+
+    let fetcher = result.map_err(exit).unwrap();
 
     println!("Finished loading in {} milliseconds.", finish.as_millis());
     println!("The archive contains {} stories.", fetcher.iter().count());
-
-    Ok(())
 }
