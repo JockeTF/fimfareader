@@ -152,7 +152,7 @@ pub struct Tag {
     pub url: String,
 }
 
-pub fn null_to_html<'de, D>(d: D) -> Result<String, D::Error>
+fn null_to_html<'de, D>(d: D) -> Result<String, D::Error>
 where
     D: Deserializer<'de>,
 {
@@ -162,7 +162,7 @@ where
     }
 }
 
-pub fn null_to_text<'de, D>(d: D) -> Result<String, D::Error>
+fn null_to_text<'de, D>(d: D) -> Result<String, D::Error>
 where
     D: Deserializer<'de>,
 {
@@ -172,7 +172,7 @@ where
     }
 }
 
-pub fn string_to_id<'de, D>(d: D) -> Result<i64, D::Error>
+fn string_to_id<'de, D>(d: D) -> Result<i64, D::Error>
 where
     D: Deserializer<'de>,
 {
