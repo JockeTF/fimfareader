@@ -6,6 +6,8 @@ use std::io::{BufReader, Read, Seek};
 use std::path::Path;
 use std::sync::Mutex;
 
+use rayon::prelude::*;
+
 use zip::read::ZipArchive;
 use zip::result::ZipError;
 
@@ -106,6 +108,6 @@ where
     where
         F: Sync + Fn(&Story) -> bool,
     {
-        self.index.iter().filter(|s| function(s)).collect()
+        self.index.par_iter().filter(|s| function(s)).collect()
     }
 }

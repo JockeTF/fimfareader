@@ -20,6 +20,9 @@ version = "*"
 [dependencies.nom]
 version = "5"
 
+[dependencies.rayon]
+version = "*"
+
 [dependencies.serde]
 version = "*"
 features = ["derive"]
