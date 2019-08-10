@@ -11,6 +11,9 @@ lto = true
 version = "*"
 features = ["serde"]
 
+[dependencies.chrono-english]
+version = "*"
+
 [dependencies.hex]
 version = "*"
 

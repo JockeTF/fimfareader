@@ -1,8 +1,8 @@
 //! Query optimizer.
 
-use std::str::FromStr;
-
 use chrono::prelude::*;
+
+use chrono_english::{parse_date_string, Dialect};
 
 use super::parser::{Operator, Source};
 use crate::archive::Story;
@@ -58,7 +58,7 @@ fn intfn(f: IntFn, op: Operator, value: &str) -> Result<Filter> {
 }
 
 fn dtufn(f: DtuFn, op: Operator, value: &str) -> Result<Filter> {
-    let parsed = DateTime::from_str(value);
+    let parsed = parse_date_string(value, Utc::now(), Dialect::Uk);
 
     let value: DateTime<Utc> = parsed.map_err(|e| match e {
         _ => Error::query("Invalid value for date type"),
