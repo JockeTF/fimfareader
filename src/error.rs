@@ -17,6 +17,7 @@ pub enum ErrorKind {
     IndexError,
     InvalidStory,
     UsageError,
+    QueryError,
 }
 
 #[derive(Debug)]
@@ -72,6 +73,10 @@ impl Error {
         ErrorBuilder::new(UsageError).message(message).build()
     }
 
+    pub fn query(message: impl ToString) -> Self {
+        ErrorBuilder::new(QueryError).message(message).build()
+    }
+
     pub fn kind(&self) -> ErrorKind {
         self.kind.clone()
     }
@@ -99,6 +104,7 @@ impl Display for ErrorKind {
             IndexError => "Index error",
             InvalidStory => "Invalid story",
             UsageError => "Usage error",
+            QueryError => "Query error",
         };
 
         write!(f, "{}", message)
