@@ -38,7 +38,7 @@ fn strfn(f: StrFn, op: Operator, value: &str) -> Result<Filter> {
     };
 
     match op {
-        Exact => ok!(move |s| f(s) == &value),
+        Exact => ok!(move |s| f(s) == value),
         Fuzzy => ok!(move |s| f(s).to_lowercase().contains(&value)),
         _ => Err(Error::query("Invalid operation for text type")),
     }
@@ -68,7 +68,7 @@ fn dtufn(f: DtuFn, op: Operator, value: &str) -> Result<Filter> {
 
     match op {
         Exact => ok!(move |s| match f(s) {
-            Some(dt) => dt == &value,
+            Some(dt) => *dt == value,
             None => false,
         }),
         Fuzzy => ok!(move |s| match f(s) {
@@ -76,11 +76,11 @@ fn dtufn(f: DtuFn, op: Operator, value: &str) -> Result<Filter> {
             None => false,
         }),
         LessThan => ok!(move |s| match f(s) {
-            Some(dt) => dt < &value,
+            Some(dt) => *dt < value,
             None => false,
         }),
         MoreThan => ok!(move |s| match f(s) {
-            Some(dt) => dt > &value,
+            Some(dt) => *dt > value,
             None => false,
         }),
     }

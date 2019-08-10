@@ -45,7 +45,7 @@ macro_rules! dfn {
 }
 
 named!(source<&str, Source>, preceded!(space0, alt!(
-    tag!("id") => { ifn!(|s| s.id as i64) } |
+    tag!("id") => { ifn!(|s| s.id) } |
 
     tag!("story") => { sfn!(|s| &s.title) } |
     tag!("title") => { sfn!(|s| &s.title) } |
@@ -58,18 +58,18 @@ named!(source<&str, Source>, preceded!(space0, alt!(
     tag!("published") => { dfn!(|s| &s.date_published) } |
     tag!("updated") => { dfn!(|s| &s.date_updated) } |
 
-    tag!("chapters") => { ifn!(|s| s.num_chapters as i64) } |
-    tag!("comments") => { ifn!(|s| s.num_comments as i64) } |
-    tag!("dislikes") => { ifn!(|s| s.num_dislikes as i64) } |
-    tag!("likes") => { ifn!(|s| s.num_likes as i64) } |
-    tag!("total views") => { ifn!(|s| s.total_num_views as i64) } |
-    tag!("views") => { ifn!(|s| s.num_views as i64) } |
-    tag!("words") => { ifn!(|s| s.num_words as i64) } |
+    tag!("chapters") => { ifn!(|s| i64::from(s.num_chapters)) } |
+    tag!("comments") => { ifn!(|s| i64::from(s.num_comments)) } |
+    tag!("dislikes") => { ifn!(|s| i64::from(s.num_dislikes)) } |
+    tag!("likes") => { ifn!(|s| i64::from(s.num_likes)) } |
+    tag!("total views") => { ifn!(|s| i64::from(s.total_num_views)) } |
+    tag!("views") => { ifn!(|s| i64::from(s.num_views)) } |
+    tag!("words") => { ifn!(|s| i64::from(s.num_words)) } |
 
     tag!("author") => { sfn!(|s| &s.author.name) } |
     tag!("author name") => { sfn!(|s| &s.author.name) } |
 
-    tag!("author id") => { ifn!(|s| s.author.id as i64) } |
+    tag!("author id") => { ifn!(|s| s.author.id) } |
     tag!("author joined") => { dfn!(|s| &s.author.date_joined) } |
 
     tag!("path") => { sfn!(|s| &s.archive.path) } |
