@@ -101,4 +101,11 @@ where
     pub fn iter(&self) -> impl Iterator<Item = &Story> {
         self.index.iter()
     }
+
+    pub fn filter<F>(&self, function: &F) -> Vec<&Story>
+    where
+        F: Sync + Fn(&Story) -> bool,
+    {
+        self.index.iter().filter(|s| function(s)).collect()
+    }
 }
