@@ -14,6 +14,9 @@ features = ["serde"]
 [dependencies.hex]
 version = "*"
 
+[dependencies.nom]
+version = "5"
+
 [dependencies.serde]
 version = "*"
 features = ["derive"]

@@ -2,6 +2,7 @@
 
 pub mod archive;
 pub mod error;
+pub mod query;
 
 use std::env::args;
 use std::time::Instant;
