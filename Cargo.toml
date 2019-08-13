@@ -1,36 +1,8 @@
-[package]
-name = "fimfareader"
-version = "0.1.0"
-authors = ["Joakim Soderlund <joakim.soderlund@gmail.com>"]
-edition = "2018"
-
 [profile.release]
 lto = true
 
-[dependencies.chrono]
-version = "*"
-features = ["serde"]
-
-[dependencies.chrono-english]
-version = "*"
-
-[dependencies.hex]
-version = "*"
-
-[dependencies.nom]
-version = "5"
-
-[dependencies.rayon]
-version = "*"
-
-[dependencies.serde]
-version = "*"
-features = ["derive"]
-
-[dependencies.serde_json]
-version = "*"
-
-[dependencies.zip]
-version = "*"
-features = ["deflate"]
-default-features = false
+[workspace]
+members = [
+    "bin",
+    "lib",
+]

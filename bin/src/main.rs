@@ -1,18 +1,14 @@
 //! Main module.
 
-pub mod archive;
-pub mod error;
-pub mod query;
-
 use std::env::args;
 use std::io::stdin;
 use std::io::stdout;
 use std::io::Write;
 use std::time::Instant;
 
-use crate::archive::Fetcher;
-use crate::error::Error;
-use crate::query::parse;
+use fimfareader::archive::Fetcher;
+use fimfareader::error::Error;
+use fimfareader::query::parse;
 
 fn exit(error: Error) -> ! {
     eprintln!("{}", error);
