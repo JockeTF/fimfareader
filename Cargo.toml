@@ -4,5 +4,6 @@ lto = true
 [workspace]
 members = [
     "bin",
+    "gtk",
     "lib",
 ]
