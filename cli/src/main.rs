@@ -6,9 +6,7 @@ use std::io::stdout;
 use std::io::Write;
 use std::time::Instant;
 
-use fimfareader::archive::Fetcher;
-use fimfareader::error::Error;
-use fimfareader::query::parse;
+use fimfareader::prelude::*;
 
 fn exit(error: Error) -> ! {
     eprintln!("{}", error);
@@ -46,7 +44,7 @@ fn main() {
     println!("The archive contains {} stories.", count);
 
     loop {
-        let filter = match parse(&input()) {
+        let filter = match query(&input()) {
             Ok(filter) => filter,
             Err(error) => {
                 println!("{}", error);
