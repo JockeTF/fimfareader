@@ -4,6 +4,11 @@ version = "0.1.0"
 authors = ["Joakim Soderlund <joakim.soderlund@gmail.com>"]
 edition = "2018"
 
+[workspace]
+members = [
+    "cli",
+]
+
 [profile.release]
 lto = true
 
