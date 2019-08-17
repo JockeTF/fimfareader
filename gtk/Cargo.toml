@@ -1,0 +1,12 @@
+[package]
+name = "fimfareader-gtk"
+version = "0.1.0"
+authors = ["Joakim Soderlund <joakim.soderlund@gmail.com>"]
+edition = "2018"
+
+[dependencies.gtk]
+version = "*"
+features = ["v3_20"]
+
+[dependencies.fimfareader]
+path = ".."
