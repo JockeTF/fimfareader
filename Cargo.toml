@@ -10,6 +10,11 @@ members = [
     "gtk",
 ]
 
+default-members = [
+    "cli",
+    "gtk",
+]
+
 [profile.release]
 lto = true
 

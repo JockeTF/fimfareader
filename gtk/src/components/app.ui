@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Generated with glade 3.22.1 
+
+Copyright (C) 2019  Joakim Soderlund
+
+This file is part of Fimfareader.
+
+Fimfareader is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Fimfareader is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Fimfareader.  If not, see <http://www.gnu.org/licenses/>.
+
+Author: Joakim Soderlund
+
+-->
+<interface>
+  <requires lib="gtk+" version="3.20"/>
+  <!-- interface-license-type gplv3 -->
+  <!-- interface-name Fimfareader -->
+  <!-- interface-description Story browser for Fimfarchive -->
+  <!-- interface-copyright 2019  Joakim Soderlund -->
+  <!-- interface-authors Joakim Soderlund -->
+  <object class="GtkApplicationWindow" id="app">
+    <property name="width_request">800</property>
+    <property name="height_request">600</property>
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <property name="icon_name">application-archive</property>
+    <child type="titlebar">
+      <object class="GtkHeaderBar">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="show_close_button">True</property>
+        <child type="title">
+          <object class="GtkEntry" id="entry">
+            <property name="width_request">500</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="truncate_multiline">True</property>
+            <property name="shadow_type">none</property>
+            <property name="caps_lock_warning">False</property>
+            <property name="primary_icon_name">search-symbolic</property>
+            <property name="placeholder_text" translatable="yes">Search...</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkMenuButton" id="menu">
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="focus_on_click">False</property>
+            <property name="receives_default">True</property>
+            <child>
+              <object class="GtkImage">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="icon_name">open-menu-symbolic</property>
+              </object>
+            </child>
+          </object>
+          <packing>
+            <property name="pack_type">end</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkToggleButton" id="search">
+            <property name="can_focus">True</property>
+            <property name="focus_on_click">False</property>
+            <property name="receives_default">True</property>
+            <child>
+              <object class="GtkImage">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="stock">gtk-find</property>
+              </object>
+            </child>
+          </object>
+          <packing>
+            <property name="pack_type">end</property>
+            <property name="position">2</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="GtkScrolledWindow">
+        <property name="visible">True</property>
+        <property name="can_focus">True</property>
+        <property name="shadow_type">in</property>
+        <child>
+          <object class="GtkTreeView" id="result">
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="enable_search">False</property>
+            <property name="show_expanders">False</property>
+            <child internal-child="selection">
+              <object class="GtkTreeSelection"/>
+            </child>
+            <child>
+              <object class="GtkTreeViewColumn" id="id_column">
+                <property name="resizable">True</property>
+                <property name="sizing">fixed</property>
+                <property name="fixed_width">100</property>
+                <property name="min_width">75</property>
+                <property name="max_width">200</property>
+                <property name="title" translatable="yes">ID</property>
+                <child>
+                  <object class="GtkCellRendererText"/>
+                  <attributes>
+                    <attribute name="text">0</attribute>
+                  </attributes>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkTreeViewColumn" id="title_column">
+                <property name="resizable">True</property>
+                <property name="sizing">fixed</property>
+                <property name="fixed_width">300</property>
+                <property name="min_width">100</property>
+                <property name="max_width">400</property>
+                <property name="title" translatable="yes">Title</property>
+                <child>
+                  <object class="GtkCellRendererText"/>
+                  <attributes>
+                    <attribute name="text">1</attribute>
+                  </attributes>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkTreeViewColumn" id="author_column">
+                <property name="resizable">True</property>
+                <property name="sizing">autosize</property>
+                <property name="fixed_width">300</property>
+                <property name="min_width">100</property>
+                <property name="max_width">500</property>
+                <property name="title" translatable="yes">Author</property>
+                <child>
+                  <object class="GtkCellRendererText"/>
+                  <attributes>
+                    <attribute name="text">2</attribute>
+                  </attributes>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+  </object>
+</interface>
