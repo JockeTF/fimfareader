@@ -19,6 +19,9 @@ features = ["serde"]
 [dependencies.chrono-english]
 version = "*"
 
+[dependencies.crossbeam-channel]
+version = "*"
+
 [dependencies.hex]
 version = "*"
 
