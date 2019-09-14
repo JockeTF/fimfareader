@@ -3,7 +3,6 @@
 use std::fs::File;
 use std::io::BufReader;
 use std::rc::Rc;
-use std::sync::Mutex;
 
 use gtk::*;
 
@@ -33,6 +32,7 @@ impl AppWindow {
         });
 
         this.apply(this.fetcher.iter().collect());
+
         Some(Self::connect(this))
     }
 
@@ -67,6 +67,14 @@ impl AppWindow {
     }
 
     pub fn filter(&self, query: &str) {
+        let fetcher = &self.fetcher;
+
+        if query.trim() == "" {
+            let iter = fetcher.iter();
+            self.apply(iter.collect());
+            return;
+        }
+
         let filter = parse(query);
 
         if filter.is_err() {
@@ -74,7 +82,7 @@ impl AppWindow {
         }
 
         let filter = filter.unwrap();
-        let vector = self.fetcher.filter(&filter);
+        let vector = fetcher.filter(&filter);
 
         self.apply(vector);
     }
