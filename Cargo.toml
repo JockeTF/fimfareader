@@ -5,9 +5,8 @@ authors = ["Joakim Soderlund <joakim.soderlund@gmail.com>"]
 edition = "2018"
 
 [workspace]
-members = [
-    "cli",
-]
+members = ["cli"]
+default-members = ["cli"]
 
 [profile.release]
 lto = true

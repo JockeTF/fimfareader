@@ -1,10 +1,13 @@
 //! Main module.
 
 use std::env::args;
+use std::io::prelude::*;
 use std::io::stdin;
 use std::io::stdout;
 use std::io::Write;
 use std::time::Instant;
+
+use indicatif::ProgressIterator;
 
 use fimfareader::prelude::*;
 
@@ -24,6 +27,30 @@ fn input() -> String {
     buffer
 }
 
+fn extract(data: Vec<u8>) -> u64 {
+    use std::io::Cursor;
+    use zip::read::ZipArchive;
+
+    let curs = Cursor::new(data);
+    let mut zobj = ZipArchive::new(curs).unwrap();
+    let mut result = 0;
+
+    for i in 0..zobj.len() {
+        let mut entry = zobj.by_index(i).unwrap();
+        let count = entry.size() as usize;
+        let mut data: Vec<u8> = Vec::with_capacity(count);
+        let read = entry.read_to_end(&mut data).unwrap();
+
+        if count != read {
+            panic!(format!("Expected {}, got {}.", count, read));
+        }
+
+        result += read as u64;
+    }
+
+    result
+}
+
 fn main() {
     let argv = args().collect::<Vec<String>>();
 
@@ -34,40 +61,19 @@ fn main() {
 
     println!("Hellopaca, World!");
 
-    let start = Instant::now();
     let result = Fetcher::from(&argv[1]);
     let fetcher = result.map_err(exit).unwrap();
-    let finish = (Instant::now() - start).as_millis();
-    let count = fetcher.iter().count();
+    let start = Instant::now();
 
-    println!("Finished loading in {} milliseconds.", finish);
-    println!("The archive contains {} stories.", count);
+    let bytes: u64 = fetcher
+        .iter()
+        .progress()
+        .map(|story| fetcher.read(story))
+        .map(|result| result.unwrap())
+        .map(|vector| extract(vector))
+        .sum();
 
-    loop {
-        let filter = match query(&input()) {
-            Ok(filter) => filter,
-            Err(error) => {
-                println!("{}", error);
-                continue;
-            }
-        };
+    let finish = (Instant::now() - start).as_secs();
 
-        let start = Instant::now();
-        let stories = fetcher.filter(&filter);
-        let finish = (Instant::now() - start).as_millis();
-        let count = stories.len();
-
-        println!("Found {} stories in {} milliseconds!", count, finish);
-
-        if count > 32 {
-            continue;
-        }
-
-        for story in stories.iter() {
-            let key = &story.id;
-            let title = &story.title;
-
-            println!("[{}] {}", key, title);
-        }
-    }
+    println!("Extracted {} in {} seconds!", bytes, finish);
 }

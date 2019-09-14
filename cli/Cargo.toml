@@ -6,3 +6,12 @@ edition = "2018"
 
 [dependencies.fimfareader]
 path = ".."
+
+[dependencies.indicatif]
+version = "*"
+
+[dependencies.zip]
+version = "*"
+
+[dependencies.rayon]
+version = "*"
