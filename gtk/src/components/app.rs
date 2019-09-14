@@ -15,7 +15,7 @@ pub struct AppWindow {
     fetcher: Fetcher<BufReader<File>>,
     window: ApplicationWindow,
     search: ToggleButton,
-    result: Mutex<TreeView>,
+    result: TreeView,
     entry: Entry,
 }
 
@@ -28,7 +28,7 @@ impl AppWindow {
             fetcher: fetcher,
             window: builder.get_object("app")?,
             search: builder.get_object("search")?,
-            result: Mutex::new(builder.get_object("result")?),
+            result: builder.get_object("result")?,
             entry: builder.get_object("entry")?,
         });
 
@@ -63,8 +63,7 @@ impl AppWindow {
             );
         }
 
-        let result = self.result.lock().unwrap();
-        result.set_model(Some(&store));
+        self.result.set_model(Some(&store));
     }
 
     pub fn filter(&self, query: &str) {
