@@ -28,6 +28,14 @@ Author: Joakim Soderlund
   <!-- interface-description Story browser for Fimfarchive -->
   <!-- interface-copyright 2019  Joakim Soderlund -->
   <!-- interface-authors Joakim Soderlund -->
+  <object class="GtkFileFilter" id="archive">
+    <mime-types>
+      <mime-type>application/zip</mime-type>
+    </mime-types>
+    <patterns>
+      <pattern>*.zip</pattern>
+    </patterns>
+  </object>
   <object class="GtkApplicationWindow" id="app">
     <property name="width_request">800</property>
     <property name="height_request">600</property>
@@ -39,6 +47,20 @@ Author: Joakim Soderlund
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="show_close_button">True</property>
+        <child>
+          <object class="GtkFileChooserButton" id="open">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="create_folders">False</property>
+            <property name="filter">archive</property>
+            <property name="preview_widget_active">False</property>
+            <property name="use_preview_label">False</property>
+            <property name="title" translatable="yes">Select Archive</property>
+          </object>
+          <packing>
+            <property name="position">2</property>
+          </packing>
+        </child>
         <child type="title">
           <object class="GtkEntry" id="entry">
             <property name="width_request">500</property>
@@ -99,9 +121,11 @@ Author: Joakim Soderlund
           <object class="GtkTreeView" id="result">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
-            <property name="enable_search">False</property>
+            <property name="reorderable">True</property>
+            <property name="search_column">2</property>
             <property name="fixed_height_mode">True</property>
             <property name="show_expanders">False</property>
+            <property name="rubber_banding">True</property>
             <child internal-child="selection">
               <object class="GtkTreeSelection"/>
             </child>
@@ -110,13 +134,30 @@ Author: Joakim Soderlund
                 <property name="resizable">True</property>
                 <property name="sizing">fixed</property>
                 <property name="fixed_width">100</property>
-                <property name="min_width">100</property>
-                <property name="max_width">100</property>
                 <property name="title" translatable="yes">ID</property>
+                <property name="clickable">True</property>
+                <property name="reorderable">True</property>
+                <property name="sort_indicator">True</property>
+                <property name="sort_column_id">0</property>
                 <child>
-                  <object class="GtkCellRendererText"/>
+                  <object class="GtkCellRendererText">
+                    <property name="alignment">right</property>
+                  </object>
                   <attributes>
                     <attribute name="text">0</attribute>
+                  </attributes>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkTreeViewColumn" id="filter_column">
+                <property name="visible">False</property>
+                <property name="sizing">fixed</property>
+                <property name="title" translatable="yes">Visible</property>
+                <child>
+                  <object class="GtkCellRendererToggle"/>
+                  <attributes>
+                    <attribute name="active">1</attribute>
                   </attributes>
                 </child>
               </object>
@@ -126,13 +167,14 @@ Author: Joakim Soderlund
                 <property name="resizable">True</property>
                 <property name="sizing">fixed</property>
                 <property name="fixed_width">400</property>
-                <property name="min_width">400</property>
-                <property name="max_width">400</property>
                 <property name="title" translatable="yes">Title</property>
+                <property name="clickable">True</property>
+                <property name="reorderable">True</property>
+                <property name="sort_column_id">2</property>
                 <child>
                   <object class="GtkCellRendererText"/>
                   <attributes>
-                    <attribute name="text">1</attribute>
+                    <attribute name="text">2</attribute>
                   </attributes>
                 </child>
               </object>
@@ -141,14 +183,15 @@ Author: Joakim Soderlund
               <object class="GtkTreeViewColumn" id="author_column">
                 <property name="resizable">True</property>
                 <property name="sizing">fixed</property>
-                <property name="fixed_width">300</property>
-                <property name="min_width">300</property>
-                <property name="max_width">300</property>
+                <property name="fixed_width">200</property>
                 <property name="title" translatable="yes">Author</property>
+                <property name="clickable">True</property>
+                <property name="reorderable">True</property>
+                <property name="sort_column_id">3</property>
                 <child>
                   <object class="GtkCellRendererText"/>
                   <attributes>
-                    <attribute name="text">2</attribute>
+                    <attribute name="text">3</attribute>
                   </attributes>
                 </child>
               </object>

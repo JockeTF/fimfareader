@@ -11,9 +11,7 @@ fn main() -> Result<()> {
         _ => Error::usage("Could not initialize GTK"),
     })?;
 
-    let fetcher = Fetcher::from("fimfarchive.zip")?;
-
-    let _window = match AppWindow::new(fetcher) {
+    let _window = match AppWindow::new() {
         Some(window) => Ok(window),
         None => Err(Error::usage("Could not create main window")),
     }?;

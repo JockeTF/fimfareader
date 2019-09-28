@@ -10,3 +10,6 @@ features = ["v3_20"]
 
 [dependencies.fimfareader]
 path = ".."
+
+[dependencies.rayon]
+version = "*"

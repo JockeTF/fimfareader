@@ -100,8 +100,16 @@ where
         Ok(buf)
     }
 
+    pub fn len(&self) -> usize {
+        self.index.len()
+    }
+
     pub fn iter(&self) -> impl Iterator<Item = &Story> {
         self.index.iter()
+    }
+
+    pub fn par_iter(&self) -> impl ParallelIterator<Item = &Story> {
+        self.index.par_iter()
     }
 
     pub fn filter<F>(&self, function: &F) -> Vec<&Story>
