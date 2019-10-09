@@ -25,7 +25,7 @@ pub struct StoryView {
     filter: TreeModelFilter,
     rows: Vec<TreeIter>,
     store: ListStore,
-    view: Option<TreeView>,
+    view: TreeView,
     visible: Vec<bool>,
 }
 
@@ -37,7 +37,7 @@ pub struct AppWindow {
 }
 
 impl StoryView {
-    pub fn new(fetcher: Fetcher<BufReader<File>>) -> Self {
+    pub fn new(fetcher: Fetcher<BufReader<File>>, view: TreeView) -> Self {
         const LENGTH: usize = 4;
 
         let types: [Type; LENGTH] = [
@@ -50,7 +50,6 @@ impl StoryView {
         let store = ListStore::new(&types);
         let filter = TreeModelFilter::new(&store, None);
         let columns: [u32; LENGTH] = [0, 1, 2, 3];
-        let view = None;
 
         let mut rows: Vec<TreeIter> = Vec::with_capacity(fetcher.len());
         let mut visible: Vec<bool> = Vec::with_capacity(fetcher.len());
@@ -68,6 +67,7 @@ impl StoryView {
         }
 
         filter.set_visible_column(1);
+        view.set_model(Some(&filter));
 
         StoryView {
             fetcher,
@@ -79,48 +79,34 @@ impl StoryView {
         }
     }
 
-    pub fn attach(&mut self, view: TreeView) -> Option<TreeView> {
-        view.set_model(Some(&self.filter));
-
-        self.view.replace(view).and_then(|view| {
-            view.set_model(None::<&TreeModel>);
-            Some(view)
-        })
+    pub fn detach(mut self) -> TreeView {
+        replace(&mut self.view, TreeView::new())
     }
 
-    pub fn detach(&mut self) -> Option<TreeView> {
-        self.view.take().and_then(|view| {
-            view.set_model(None::<&TreeModel>);
-            Some(view)
-        })
-    }
-
-    pub fn filter<T>(&mut self, filter: T)
+    pub fn filter<T>(&mut self, f: &T)
     where
         T: Sync + Fn(&Story) -> bool,
     {
-        let store = &self.store;
-        let visible = &mut self.visible;
-
-        let bitmap: Vec<bool> = self.fetcher.par_iter().map(&filter).collect();
+        self.view.set_model(None::<&ListStore>);
+        let visible: Vec<bool> = self.fetcher.par_iter().map(f).collect();
 
         for (i, row) in self.rows.iter().enumerate() {
-            let new = bitmap[i];
-            let old = visible[i];
+            let old = self.visible[i];
+            let new = visible[i];
 
             if new != old {
-                store.set_value(row, 1, &new.to_value());
+                self.store.set_value(row, 1, &new.to_value());
             }
         }
 
-        self.visible = bitmap;
+        self.visible = visible;
+        self.view.set_model(Some(&self.filter));
     }
 }
 
 impl Drop for StoryView {
     fn drop(&mut self) {
-        println!("DROP!");
-        self.detach();
+        self.view.set_model(None::<&ListStore>);
     }
 }
 
@@ -170,17 +156,11 @@ impl AppWindow {
         let view = match replace(&mut self.store, Empty) {
             Empty => panic!(),
             Detached(view) => view,
-            Attached(mut store) => {
-                let view = store.detach();
-                drop(store);
-                view.unwrap()
-            }
+            Attached(store) => store.detach(),
         };
 
         let fetcher = Fetcher::from(path).unwrap();
-        let mut store = StoryView::new(fetcher);
-
-        store.attach(view);
+        let store = StoryView::new(fetcher, view);
 
         self.store = Attached(store);
     }
@@ -195,13 +175,13 @@ impl AppWindow {
         };
 
         if query.trim() == "" {
-            model.filter(|_| true);
+            model.filter(&|_| true);
             return;
         }
 
         match parse(query) {
-            Err(_) => model.filter(|_| false),
-            Ok(filter) => model.filter(filter),
+            Err(_) => model.filter(&|_| false),
+            Ok(filter) => model.filter(&filter),
         }
     }
 }
