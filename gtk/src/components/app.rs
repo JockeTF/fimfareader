@@ -80,6 +80,7 @@ impl StoryView {
     }
 
     pub fn detach(mut self) -> TreeView {
+        self.view.set_model(None::<&ListStore>);
         replace(&mut self.view, TreeView::new())
     }
 
