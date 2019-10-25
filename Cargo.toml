@@ -9,6 +9,10 @@ members = [
     "cli",
 ]
 
+default-members = [
+    "cli",
+]
+
 [profile.release]
 lto = true
 

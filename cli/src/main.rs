@@ -1,10 +1,9 @@
 //! Main module.
 
 use std::env::args;
-use std::io::stdin;
-use std::io::stdout;
-use std::io::Write;
 use std::time::Instant;
+
+use rustyline::Editor;
 
 use fimfareader::prelude::*;
 
@@ -14,18 +13,9 @@ fn exit(error: Error) -> ! {
     std::process::exit(1)
 }
 
-fn input() -> String {
-    let mut buffer = String::new();
-
-    print!(">>> ");
-    stdout().flush().unwrap();
-    stdin().read_line(&mut buffer).unwrap();
-
-    buffer
-}
-
 fn main() {
     let argv = args().collect::<Vec<String>>();
+    let mut editor = Editor::<()>::new();
 
     if argv.len() != 2 {
         eprintln!("Usage: fimfareader <ARCHIVE>");
@@ -43,8 +33,10 @@ fn main() {
     println!("Finished loading in {} milliseconds.", finish);
     println!("The archive contains {} stories.", count);
 
-    loop {
-        let filter = match query(&input()) {
+    while let Ok(line) = editor.readline(">>> ") {
+        editor.add_history_entry(&line);
+
+        let filter = match query(&line) {
             Ok(filter) => filter,
             Err(error) => {
                 println!("{}", error);

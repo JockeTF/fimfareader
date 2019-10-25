@@ -6,3 +6,7 @@ edition = "2018"
 
 [dependencies.fimfareader]
 path = ".."
+
+[dependencies.rustyline]
+default-features = false
+version = "*"
