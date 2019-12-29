@@ -7,8 +7,11 @@ use std::mem::replace;
 use std::path::Path;
 use std::rc::Rc;
 
-use gtk::*;
+use glib::Type;
+use gtk::prelude::*;
 use rayon::prelude::*;
+
+use gtk::*;
 
 use fimfareader::archive::Fetcher;
 use fimfareader::archive::Story;
