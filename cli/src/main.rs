@@ -1,17 +1,97 @@
 //! Main module.
 
 use std::env::args;
+use std::io::BufReader;
+use std::io::Cursor;
+use std::io::Read;
+use std::io::Seek;
+use std::path::Path;
+use std::sync::atomic::AtomicUsize;
+use std::sync::atomic::Ordering;
 use std::time::Instant;
 
+use rayon::iter::ParallelIterator;
 use rustyline::Editor;
+use zip::read::ZipArchive;
+
+use tantivy::collector::TopDocs;
+use tantivy::directory::MmapDirectory;
+use tantivy::query::QueryParser;
+use tantivy::schema;
+use tantivy::schema::Document;
+use tantivy::schema::Schema;
+use tantivy::schema::Value;
+use tantivy::Index;
+use tantivy::ReloadPolicy;
 
 use fimfareader::prelude::*;
-use fimfareader_query::parse;
 
 fn exit(error: Error) -> ! {
     eprintln!("{}", error);
 
     std::process::exit(1)
+}
+
+fn load_index<T>(schema: Schema, fetcher: &Fetcher<T>) -> Index
+where
+    T: Read + Seek + Send,
+{
+    let identity = fetcher.identity().unwrap();
+    let directory = Path::new("search").join(identity);
+
+    if directory.exists() {
+        let store = MmapDirectory::open(&directory).unwrap();
+        return Index::open_or_create(store, schema).unwrap();
+    }
+
+    std::fs::create_dir_all(&directory).unwrap();
+    let store = MmapDirectory::open(&directory).unwrap();
+    let index = Index::create(store, schema).unwrap();
+
+    let schema = index.schema();
+    let sid = schema.get_field("sid").unwrap();
+    let content = schema.get_field("content").unwrap();
+    let mut writer = index.writer(250_000_000).unwrap();
+
+    let counter = AtomicUsize::new(0);
+    let total = fetcher.iter().count();
+    let start = Instant::now();
+
+    fetcher.par_iter().for_each(|story| {
+        let mut doc = Document::default();
+        doc.add_i64(sid, story.id);
+
+        let data = fetcher.read(story).unwrap();
+        let count = counter.fetch_add(1, Ordering::SeqCst);
+        let mut arch = ZipArchive::new(Cursor::new(data)).unwrap();
+        let mut text = String::with_capacity(1_048_576);
+
+        if (count % 16) == 0 {
+            let percentage = (count as f64 / total as f64) * 100f64;
+            print!("\rIndexing archive... {:.2}%", percentage);
+        }
+
+        for i in 0..arch.len() {
+            let file = arch.by_index(i).unwrap();
+
+            if !file.name().ends_with(".html") {
+                continue;
+            }
+
+            BufReader::new(file).read_to_string(&mut text).unwrap();
+            doc.add_text(content, &text);
+            text.clear();
+        }
+
+        writer.add_document(doc);
+    });
+
+    writer.commit().unwrap();
+
+    let finish = (Instant::now() - start).as_secs();
+    println!("\rIndex generated in {} seconds.", finish);
+
+    index
 }
 
 fn main() {
@@ -34,33 +114,36 @@ fn main() {
     println!("Finished loading in {} milliseconds.", finish);
     println!("The archive contains {} stories.", count);
 
+    let mut builder = Schema::builder();
+    let sid = builder.add_i64_field("sid", schema::INDEXED | schema::STORED);
+    let content = builder.add_text_field("content", schema::TEXT);
+    let index = load_index(builder.build(), &fetcher);
+
+    let reader = index
+        .reader_builder()
+        .reload_policy(ReloadPolicy::OnCommit)
+        .try_into()
+        .unwrap();
+
+    let searcher = reader.searcher();
+    let parser = QueryParser::for_index(&index, vec![content]);
+
     while let Ok(line) = editor.readline(">>> ") {
         editor.add_history_entry(&line);
 
-        let filter = match parse(&line) {
-            Ok(filter) => filter,
-            Err(error) => {
-                println!("{}", error);
-                continue;
-            }
-        };
+        let limit = TopDocs::with_limit(16);
+        let query = parser.parse_query(&line).unwrap();
+        let docs = searcher.search(&query, &limit).unwrap();
 
-        let start = Instant::now();
-        let stories = fetcher.filter(&filter);
-        let finish = (Instant::now() - start).as_millis();
-        let count = stories.len();
+        for (score, address) in docs {
+            let doc = searcher.doc(address).unwrap();
 
-        println!("Found {} stories in {} milliseconds!", count, finish);
+            let story = match doc.get_first(sid).unwrap() {
+                Value::I64(value) => fetcher.fetch(*value).unwrap(),
+                _ => panic!("Invalid story key type!"),
+            };
 
-        if count > 32 {
-            continue;
-        }
-
-        for story in stories.iter() {
-            let key = &story.id;
-            let title = &story.title;
-
-            println!("[{}] {}", key, title);
+            println!("{:02.0}% [{:06}] {}", score, story.id, story.title);
         }
     }
 }
