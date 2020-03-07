@@ -4,6 +4,9 @@ use chrono::prelude::*;
 
 use chrono_english::{parse_date_string, Dialect};
 
+use regex::RegexBuilder;
+use regex::escape;
+
 use super::parser::{Operator, Source};
 use crate::archive::Story;
 use crate::error::{Error, Result};
@@ -32,14 +35,20 @@ pub fn optimize(src: Source, op: Operator, value: &str) -> Result<Filter> {
 }
 
 fn strfn(f: StrFn, op: Operator, value: &str) -> Result<Filter> {
-    let value: String = match op {
-        Fuzzy => value.to_lowercase(),
-        _ => value.to_owned(),
-    };
+    let exact: String = value.into();
+
+    let result = RegexBuilder::new(&escape(value))
+        .case_insensitive(true)
+        .size_limit(1_048_576)
+        .build();
+
+    let regex = result.map_err(|e| match e {
+        _ => Error::query("Invalid value for fuzzy match"),
+    })?;
 
     match op {
-        Exact => ok!(move |s| f(s) == value),
-        Fuzzy => ok!(move |s| f(s).to_lowercase().contains(&value)),
+        Exact => ok!(move |s| f(s) == exact),
+        Fuzzy => ok!(move |s| regex.is_match(f(s))),
         _ => Err(Error::query("Invalid operation for text type")),
     }
 }

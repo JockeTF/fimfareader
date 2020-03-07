@@ -32,6 +32,9 @@ version = "5"
 [dependencies.rayon]
 version = "*"
 
+[dependencies.regex]
+version = "*"
+
 [dependencies.serde]
 version = "*"
 features = ["derive"]
