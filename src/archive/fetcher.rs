@@ -15,16 +15,13 @@ use super::parser::parse;
 use super::story::Story;
 use crate::error::{Error, Result};
 
-pub struct Fetcher<T>
-where
-    T: Read + Seek,
-{
+pub struct Fetcher<T: Read + Seek> {
     archive: Mutex<ZipArchive<T>>,
     index: Vec<Story>,
 }
 
 impl Fetcher<BufReader<File>> {
-    pub fn from(path: impl AsRef<Path>) -> Result<Self> {
+    pub fn new(path: impl AsRef<Path>) -> Result<Self> {
         use IoErrorKind::*;
 
         let file = File::open(path).map_err(|e| match e.kind() {
@@ -32,15 +29,12 @@ impl Fetcher<BufReader<File>> {
             _ => Error::archive("Could not open file"),
         })?;
 
-        Self::from_reader(BufReader::with_capacity(8_000_000, file))
+        Self::with_reader(BufReader::with_capacity(8_000_000, file))
     }
 }
 
-impl<T> Fetcher<T>
-where
-    T: Read + Seek,
-{
-    pub fn from_reader(reader: T) -> Result<Self> {
+impl<T: Read + Seek> Fetcher<T> {
+    pub fn with_reader(reader: T) -> Result<Self> {
         let mut handle = Self::open(reader)?;
         let index = Self::load(&mut handle)?;
         let archive = Mutex::new(handle);

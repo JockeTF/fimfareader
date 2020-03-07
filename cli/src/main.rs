@@ -25,7 +25,7 @@ fn main() {
     println!("Hellopaca, World!");
 
     let start = Instant::now();
-    let result = Fetcher::from(&argv[1]);
+    let result = Fetcher::new(&argv[1]);
     let fetcher = result.map_err(exit).unwrap();
     let finish = (Instant::now() - start).as_millis();
     let count = fetcher.iter().count();
