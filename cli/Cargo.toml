@@ -13,3 +13,14 @@ path = "../query"
 [dependencies.rustyline]
 default-features = false
 version = "*"
+
+[dependencies.rayon]
+version = "*"
+
+[dependencies.tantivy]
+version = "*"
+
+[dependencies.zip]
+version = "*"
+features = ["deflate"]
+default-features = false
