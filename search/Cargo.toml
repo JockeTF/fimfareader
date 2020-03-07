@@ -1,5 +1,5 @@
 [package]
-name = "fimfareader-cli"
+name = "fimfareader-search"
 version = "0.1.0"
 authors = ["Joakim Soderlund <joakim.soderlund@gmail.com>"]
 edition = "2021"
@@ -7,12 +7,14 @@ edition = "2021"
 [dependencies.fimfareader]
 path = ".."
 
-[dependencies.fimfareader-search]
-path = "../search"
+[dependencies.rayon]
+version = "*"
 
-[dependencies.rustyline]
-default-features = false
-version = "14"
+[dependencies.tantivy]
+git = "https://github.com/quickwit-oss/tantivy.git"
+
+[dependencies.thread_local]
+version = "*"
 
 [dependencies.zip]
 version = "*"
