@@ -104,8 +104,24 @@ impl<T: Read + Seek> Fetcher<T> {
         Ok(buf)
     }
 
+    pub fn identity(&self) -> Result<String> {
+        let Ok(mut archive) = self.archive.lock() else {
+            return Err(Error::archive("Could not acquire fetcher lock"));
+        };
+
+        let Ok(index) = archive.by_name("index.json") else {
+            return Err(Error::archive("Could not open archive index"));
+        };
+
+        Ok(format!("{}", index.crc32()))
+    }
+
     pub fn iter(&self) -> impl Iterator<Item = &Story> {
         self.index.iter()
+    }
+
+    pub fn par_iter(&self) -> impl ParallelIterator<Item = &Story> {
+        self.index.par_iter()
     }
 
     pub fn filter<F>(&self, function: &F) -> Vec<&Story>

@@ -5,9 +5,10 @@ use std::error::Error;
 use std::result::Result;
 use std::time::Instant;
 
-use fimfareader::archive::Fetcher;
-use fimfareader_query::parse;
 use rustyline::DefaultEditor;
+
+use fimfareader::archive::Fetcher;
+use fimfareader_search::Searcher;
 
 fn main() -> Result<(), Box<dyn Error>> {
     let argv = args().collect::<Vec<String>>();
@@ -28,33 +29,41 @@ fn main() -> Result<(), Box<dyn Error>> {
     println!("Finished loading in {finish:?}.");
     println!("The archive contains {count} stories.");
 
+    let searcher = Searcher::new(&fetcher);
+
     while let Ok(line) = editor.readline(">>> ") {
         editor.add_history_entry(&line)?;
-
-        let filter = match parse(&line) {
-            Ok(filter) => filter,
-            Err(error) => {
-                println!("{}", error);
-                continue;
-            }
-        };
-
         let start = Instant::now();
-        let stories = fetcher.filter(&filter);
+
+        let result = searcher
+            .search(&line)
+            .into_iter()
+            .filter(|(_sid, score)| *score > 10f32)
+            .map(|(sid, score)| (i32::try_from(sid).unwrap(), score))
+            .filter_map(|(sid, score)| Some((fetcher.fetch(sid)?, score)))
+            .collect::<Vec<_>>();
+
         let finish = (Instant::now() - start).as_millis();
-        let count = stories.len();
+        let count = result.len();
 
         println!("Found {} stories in {} milliseconds!", count, finish);
 
-        if count > 32 {
-            continue;
-        }
-
-        for story in stories.iter() {
+        for (story, score) in result {
             let key = &story.id;
             let title = &story.title;
 
-            println!("[{}] {}", key, title);
+            let tags = story
+                .tags
+                .iter()
+                .map(|tag| tag.name.to_string())
+                .collect::<Vec<_>>()
+                .join(", ");
+
+            println!("{:02.02}% [{:>6}] {}", score, key, title);
+            println!("{}", tags);
+            println!("{}", story.short_description);
+            println!("{}", story.url);
+            println!();
         }
     }
 
