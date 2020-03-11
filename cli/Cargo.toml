@@ -20,6 +20,9 @@ version = "*"
 [dependencies.tantivy]
 version = "*"
 
+[dependencies.thread_local]
+version = "*"
+
 [dependencies.zip]
 version = "*"
 features = ["deflate"]

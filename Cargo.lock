@@ -349,6 +349,7 @@ dependencies = [
  "rayon",
  "rustyline",
  "tantivy",
+ "thread_local",
  "zip",
 ]
 
