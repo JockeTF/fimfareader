@@ -7,9 +7,10 @@ use chrono_english::{parse_date_string, Dialect};
 use regex::RegexBuilder;
 use regex::escape;
 
+use fimfareader::archive::Story;
+use fimfareader::error::{Error, Result};
+
 use super::parser::{Operator, Source};
-use crate::archive::Story;
-use crate::error::{Error, Result};
 
 use Operator::*;
 use Source::*;

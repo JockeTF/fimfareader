@@ -7,6 +7,9 @@ edition = "2018"
 [dependencies.fimfareader]
 path = ".."
 
+[dependencies.fimfareader-query]
+path = "../query"
+
 [dependencies.rustyline]
 default-features = false
 version = "*"

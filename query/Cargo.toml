@@ -1,0 +1,23 @@
+[package]
+name = "fimfareader-query"
+version = "0.1.0"
+authors = ["Joakim Soderlund <joakim.soderlund@gmail.com>"]
+edition = "2018"
+
+[dependencies.fimfareader]
+path = ".."
+
+[dependencies.chrono]
+version = "*"
+
+[dependencies.chrono-english]
+version = "*"
+
+[dependencies.rayon]
+version = "*"
+
+[dependencies.regex]
+version = "*"
+
+[dependencies.nom]
+version = "*"

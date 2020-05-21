@@ -7,9 +7,10 @@ use nom::error::ErrorKind as NomErrorKind;
 use nom::sequence::*;
 use nom::*;
 
+use fimfareader::archive::Story;
+use fimfareader::error::*;
+
 use super::optimizer::optimize;
-use crate::archive::Story;
-use crate::error::*;
 
 type Filter = Box<dyn Fn(&Story) -> bool + Sync>;
 

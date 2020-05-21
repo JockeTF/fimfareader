@@ -6,6 +6,7 @@ use std::time::Instant;
 use rustyline::Editor;
 
 use fimfareader::prelude::*;
+use fimfareader_query::parse;
 
 fn exit(error: Error) -> ! {
     eprintln!("{}", error);
@@ -36,7 +37,7 @@ fn main() {
     while let Ok(line) = editor.readline(">>> ") {
         editor.add_history_entry(&line);
 
-        let filter = match query(&line) {
+        let filter = match parse(&line) {
             Ok(filter) => filter,
             Err(error) => {
                 println!("{}", error);

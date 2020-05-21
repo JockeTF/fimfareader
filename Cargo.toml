@@ -7,10 +7,12 @@ edition = "2018"
 [workspace]
 members = [
     "cli",
+    "query",
 ]
 
 default-members = [
     "cli",
+    "query",
 ]
 
 [profile.release]
@@ -20,19 +22,10 @@ lto = true
 version = "*"
 features = ["serde"]
 
-[dependencies.chrono-english]
-version = "*"
-
 [dependencies.hex]
 version = "*"
 
-[dependencies.nom]
-version = "5"
-
 [dependencies.rayon]
-version = "*"
-
-[dependencies.regex]
 version = "*"
 
 [dependencies.serde]
