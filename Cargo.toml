@@ -8,6 +8,7 @@ edition = "2021"
 members = [
     "cli",
     "query",
+    "search",
 ]
 
 default-members = [

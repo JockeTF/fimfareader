@@ -345,11 +345,8 @@ name = "fimfareader-cli"
 version = "0.1.0"
 dependencies = [
  "fimfareader",
- "fimfareader-query",
- "rayon",
+ "fimfareader-search",
  "rustyline",
- "tantivy",
- "thread_local",
  "zip",
 ]
 
@@ -363,6 +360,17 @@ dependencies = [
  "nom",
  "rayon",
  "regex",
+]
+
+[[package]]
+name = "fimfareader-search"
+version = "0.1.0"
+dependencies = [
+ "fimfareader",
+ "rayon",
+ "tantivy",
+ "thread_local",
+ "zip",
 ]
 
 [[package]]
