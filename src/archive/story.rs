@@ -1,9 +1,19 @@
 //! Story meta.
 
+use std::collections::HashSet;
+use std::sync::Mutex;
+
 use chrono::prelude::*;
+
 use serde::de::Error;
 use serde::{Deserialize, Deserializer};
 use serde_json::Value;
+
+use lazy_static::lazy_static;
+
+lazy_static! {
+    static ref TAGS: Mutex<HashSet<&'static Tag>> = Mutex::new(HashSet::new());
+}
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct Story {
@@ -33,7 +43,8 @@ pub struct Story {
     pub short_description: String,
     pub status: Status,
     pub submitted: bool,
-    pub tags: Vec<Tag>,
+    #[serde(deserialize_with = "interned_tag")]
+    pub tags: Vec<&'static Tag>,
     #[serde(deserialize_with = "null_to_text")]
     pub title: String,
     pub total_num_views: i32,
@@ -143,7 +154,7 @@ pub enum Status {
     Visible,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, Deserialize)]
 pub struct Tag {
     pub id: i64,
     pub name: String,
@@ -187,6 +198,27 @@ where
     } else {
         Err(Error::custom("Invalid type for ID value"))
     }
+}
+
+fn interned_tag<'de, D>(d: D) -> Result<Vec<&'static Tag>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let tags = Vec::<Tag>::deserialize(d)?;
+    let mut store = TAGS.lock().unwrap();
+
+    Ok(tags
+        .into_iter()
+        .map(|tag| match store.get(&tag) {
+            Some(tag) => tag,
+            None => {
+                let boxed: Box<Tag> = Box::new(tag);
+                let leaked: &'static Tag = Box::leak(boxed);
+                store.insert(leaked);
+                leaked
+            }
+        })
+        .collect())
 }
 
 impl<'de> Deserialize<'de> for Color {

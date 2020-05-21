@@ -27,6 +27,9 @@ features = ["serde"]
 [dependencies.hex]
 version = "*"
 
+[dependencies.lazy_static]
+version = "*"
+
 [dependencies.rayon]
 version = "*"
 
