@@ -4,8 +4,8 @@ use chrono::prelude::*;
 
 use chrono_english::{parse_date_string, Dialect};
 
-use regex::RegexBuilder;
 use regex::escape;
+use regex::RegexBuilder;
 
 use fimfareader::archive::Story;
 use fimfareader::error::{Error, Result};
