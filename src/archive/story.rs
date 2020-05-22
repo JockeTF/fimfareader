@@ -1,18 +1,15 @@
 //! Story meta.
 
-use std::collections::HashSet;
-use std::sync::Mutex;
-
 use chrono::prelude::*;
-
+use lazy_static::lazy_static;
 use serde::de::Error;
 use serde::{Deserialize, Deserializer};
 use serde_json::Value;
 
-use lazy_static::lazy_static;
+use super::interner::Interner;
 
 lazy_static! {
-    static ref TAGS: Mutex<HashSet<&'static Tag>> = Mutex::new(HashSet::new());
+    static ref TAGS: Interner<Tag> = Interner::new();
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -43,7 +40,7 @@ pub struct Story {
     pub short_description: String,
     pub status: Status,
     pub submitted: bool,
-    #[serde(deserialize_with = "interned_tag")]
+    #[serde(deserialize_with = "tags_as_static")]
     pub tags: Vec<&'static Tag>,
     #[serde(deserialize_with = "null_to_text")]
     pub title: String,
@@ -200,25 +197,13 @@ where
     }
 }
 
-fn interned_tag<'de, D>(d: D) -> Result<Vec<&'static Tag>, D::Error>
+fn tags_as_static<'de, D>(d: D) -> Result<Vec<&'static Tag>, D::Error>
 where
     D: Deserializer<'de>,
 {
-    let tags = Vec::<Tag>::deserialize(d)?;
-    let mut store = TAGS.lock().unwrap();
+    let tags: Vec<Tag> = Vec::deserialize(d)?;
 
-    Ok(tags
-        .into_iter()
-        .map(|tag| match store.get(&tag) {
-            Some(tag) => tag,
-            None => {
-                let boxed: Box<Tag> = Box::new(tag);
-                let leaked: &'static Tag = Box::leak(boxed);
-                store.insert(leaked);
-                leaked
-            }
-        })
-        .collect())
+    Ok(tags.into_iter().map(|tag| TAGS.leak(tag)).collect())
 }
 
 impl<'de> Deserialize<'de> for Color {
