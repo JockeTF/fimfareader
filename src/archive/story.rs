@@ -1,9 +1,16 @@
 //! Story meta.
 
 use chrono::prelude::*;
+use lazy_static::lazy_static;
 use serde::de::Error;
 use serde::{Deserialize, Deserializer};
 use serde_json::Value;
+
+use super::interner::Interner;
+
+lazy_static! {
+    static ref TAGS: Interner<Tag> = Interner::new();
+}
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct Story {
@@ -33,7 +40,8 @@ pub struct Story {
     pub short_description: String,
     pub status: Status,
     pub submitted: bool,
-    pub tags: Vec<Tag>,
+    #[serde(deserialize_with = "tags_as_static")]
+    pub tags: Vec<&'static Tag>,
     #[serde(deserialize_with = "null_to_text")]
     pub title: String,
     pub total_num_views: i32,
@@ -143,7 +151,7 @@ pub enum Status {
     Visible,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, Hash, PartialEq)]
 pub struct Tag {
     pub id: i64,
     pub name: String,
@@ -187,6 +195,15 @@ where
     } else {
         Err(Error::custom("Invalid type for ID value"))
     }
+}
+
+fn tags_as_static<'de, D>(d: D) -> Result<Vec<&'static Tag>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let tags: Vec<Tag> = Vec::deserialize(d)?;
+
+    Ok(tags.into_iter().map(|tag| TAGS.intern(tag)).collect())
 }
 
 impl<'de> Deserialize<'de> for Color {
