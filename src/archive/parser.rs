@@ -1,7 +1,9 @@
 //! Index parser.
 
+use std::collections::HashSet;
 use std::io::BufRead;
 use std::sync::mpsc::{channel, Receiver};
+use std::sync::Arc;
 use std::thread::spawn;
 
 use rayon::prelude::*;
@@ -9,7 +11,7 @@ use serde::de::Error;
 use serde_json::error::Result;
 use serde_json::from_str;
 
-use super::story::Story;
+use super::story::{Author, Story, Tag};
 
 const TRIM: &[char] = &['"', ',', ' ', '\t', '\n', '\r'];
 
@@ -46,9 +48,48 @@ pub fn parse(reader: impl BufRead) -> Result<Vec<Story>> {
         return Err(Error::custom("Invalid file structure"));
     }
 
-    rx.recv().map_err(|e| match e {
+    let result = rx.recv().map_err(|e| match e {
         _ => Error::custom("Missing parser result"),
-    })?
+    })?;
+
+    Ok(dedup(result?))
+}
+
+fn dedup(mut stories: Vec<Story>) -> Vec<Story> {
+    let mut authors: HashSet<Arc<Author>> = HashSet::new();
+    let mut tags: HashSet<Arc<Tag>> = HashSet::new();
+
+    for story in stories.iter_mut() {
+        if let Some(author) = authors.get(&story.author) {
+            story.author = author.clone();
+        } else {
+            authors.insert(story.author.clone());
+        }
+    }
+
+    for story in stories.iter_mut() {
+        let unseen = story
+            .tags
+            .iter()
+            .filter(|tag| !tags.contains(*tag))
+            .map(|tag| tag.clone())
+            .collect::<Vec<_>>();
+
+        tags.extend(unseen);
+
+        story.tags = story
+            .tags
+            .iter()
+            .filter_map(|tag| tags.get(tag))
+            .map(|tag| tag.clone())
+            .collect();
+    }
+
+    for tag in tags.iter() {
+        println!("{}: {}", tag.name, Arc::strong_count(tag));
+    }
+
+    stories
 }
 
 fn spawn_parser(stream: Receiver<String>) -> Receiver<Result<Vec<Story>>> {
