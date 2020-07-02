@@ -49,25 +49,36 @@ fn main() {
 
     while let Ok(line) = editor.readline(">>> ") {
         editor.add_history_entry(&line);
-
-        let filter = searcher.parse(&line);
-
         let start = Instant::now();
-        let stories = fetcher.filter(&filter);
+
+        let result = searcher
+            .search(&line)
+            .into_iter()
+            .filter(|(_sid, score)| *score > 10f32)
+            .filter_map(|(sid, score)| Some((fetcher.fetch(sid)?, score)))
+            .collect::<Vec<_>>();
+
         let finish = (Instant::now() - start).as_millis();
-        let count = stories.len();
+        let count = result.len();
 
         println!("Found {} stories in {} milliseconds!", count, finish);
 
-        if count > 32 {
-            continue;
-        }
-
-        for story in stories.iter() {
+        for (story, score) in result {
             let key = &story.id;
             let title = &story.title;
 
-            println!("[{}] {}", key, title);
+            let tags = story
+                .tags
+                .iter()
+                .map(|tag| String::from(&tag.name))
+                .collect::<Vec<_>>()
+                .join(", ");
+
+            println!("{:02.02}% [{:>6}] {}", score, key, title);
+            println!("{}", tags);
+            println!("{}", story.short_description);
+            println!("{}", story.url);
+            println!();
         }
     }
 }
