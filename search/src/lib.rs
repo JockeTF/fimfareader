@@ -125,7 +125,7 @@ impl Searcher {
         println!("Index generated in {} seconds.", finish);
     }
 
-    pub fn parse(&self, text: &str) -> impl Fn(&Story) -> bool + Sync {
+    pub fn search(&self, text: &str) -> Vec<(i64, f32)> {
         let reader = self
             .index
             .reader_builder()
@@ -138,12 +138,11 @@ impl Searcher {
         let content = self.schema.get_field("content").unwrap();
         let parser = QueryParser::for_index(&self.index, vec![content]);
 
-        let limit = TopDocs::with_limit(16);
+        let limit = TopDocs::with_limit(32);
         let query = parser.parse_query(&text).unwrap();
         let docs = searcher.search(&query, &limit).unwrap();
 
-        let mut sids: Vec<i64> = docs
-            .into_iter()
+        docs.into_iter()
             .map(|(score, address)| {
                 let doc = searcher.doc(address).unwrap();
 
@@ -152,7 +151,14 @@ impl Searcher {
                     _ => panic!("Invalid story key type!"),
                 }
             })
-            .filter(|(_, score)| *score > 0.1)
+            .collect()
+    }
+
+    pub fn parse(&self, text: &str) -> impl Fn(&Story) -> bool + Sync {
+        let mut sids: Vec<_> = self
+            .search(text)
+            .into_iter()
+            .filter(|(_, score)| *score > 10f32)
             .map(|(sid, _)| sid)
             .collect();
 
