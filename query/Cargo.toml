@@ -20,4 +20,4 @@ version = "*"
 version = "*"
 
 [dependencies.nom]
-version = "*"
+version = "5"
