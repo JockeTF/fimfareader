@@ -29,7 +29,7 @@ impl Fetcher<BufReader<File>> {
             _ => Error::archive("Could not open file"),
         })?;
 
-        Self::with_reader(BufReader::with_capacity(8_000_000, file))
+        Self::with_reader(BufReader::new(file))
     }
 }
 
@@ -60,7 +60,7 @@ impl<T: Read + Seek> Fetcher<T> {
             _ => Error::archive("Could not open story index"),
         })?;
 
-        parse(BufReader::with_capacity(8_000_000, file)).map_err(Error::index)
+        parse(BufReader::with_capacity(1048576, file)).map_err(Error::index)
     }
 
     pub fn fetch(&self, key: i64) -> Option<&Story> {

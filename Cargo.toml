@@ -41,6 +41,6 @@ features = ["derive"]
 version = "*"
 
 [dependencies.zip]
-version = "<0.5.7"
+version = "*"
 features = ["deflate"]
 default-features = false
