@@ -1,0 +1,26 @@
+[package]
+name = "fimfareader-hpm"
+version = "0.1.0"
+authors = ["Joakim Soderlund <joakim.soderlund@gmail.com>"]
+edition = "2021"
+
+[dependencies.fimfareader]
+path = ".."
+
+[dependencies.chrono]
+version = "*"
+
+[dependencies.indicatif]
+version = "*"
+features = ["rayon"]
+
+[dependencies.rayon]
+version = "*"
+
+[dependencies.regex]
+version = "*"
+
+[dependencies.zip]
+version = "*"
+features = ["deflate"]
+default-features = false

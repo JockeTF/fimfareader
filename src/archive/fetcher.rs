@@ -94,6 +94,10 @@ impl<T: Read + Seek> Fetcher<T> {
         Ok(buf)
     }
 
+    pub fn index(&self) -> &Vec<Story> {
+        &self.index
+    }
+
     pub fn iter(&self) -> impl Iterator<Item = &Story> {
         self.index.iter()
     }
