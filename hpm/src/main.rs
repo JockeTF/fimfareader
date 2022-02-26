@@ -1,51 +1,71 @@
-use std::collections::HashMap;
 use std::env::args;
 use std::io::Cursor;
 use std::io::Read;
 
-use chrono::prelude::*;
 use fimfareader::prelude::*;
 use rayon::prelude::*;
 
-use indicatif::ParallelProgressIterator;
-
-use regex::Regex;
-use regex::RegexBuilder;
-
 use zip::ZipArchive;
 
-// TODO: More varied and less literal matches.
-const PATTERN: &str = "[^a-z]hug(s|ged|ging)?[^a-z]";
-
+#[allow(unused)]
+#[derive(Debug)]
 struct Stat {
-    date: DateTime<Utc>,
-    count: u64,
-    words: u64,
+    story: i64,
+    chars: i64,
+    count: i64,
 }
 
-fn count(regex: &Regex, story: &Story, data: Vec<u8>) -> Vec<Stat> {
+fn count(story: &Story, data: Vec<u8>) -> Stat {
     let mut archive = ZipArchive::new(Cursor::new(data)).unwrap();
 
-    // TODO: Statistics per chapter.
-    let date = match story.date_published {
-        Some(published) => published,
-        None => return Vec::new(),
-    };
-
-    let mut matches = 0;
+    let id = story.id;
+    let mut count = 0;
+    let mut chars = 0;
 
     for i in 0..archive.len() {
         let mut file = archive.by_index(i).unwrap();
         let mut data = String::with_capacity(file.size() as usize);
 
-        file.read_to_string(&mut data).unwrap();
-        matches += regex.find_iter(&data).count();
+        let bytes = match file.read_to_string(&mut data) {
+            Ok(bytes) => bytes,
+            Err(_) => {
+                return Stat {
+                    story: id,
+                    count: -1,
+                    chars: -1,
+                }
+            }
+        };
+
+        let matches = data
+            .chars()
+            .enumerate()
+            .filter(|(_, chr)| *chr == '\u{9d}')
+            .map(|(index, _)| index)
+            .collect::<Vec<usize>>();
+
+        count += matches.len() as i64;
+        chars += bytes as i64;
+
+        for pos in matches {
+            let min = pos.saturating_sub(32);
+
+            let snip = data
+                .chars()
+                .skip(min)
+                .take(64)
+                .filter(|c| !c.is_whitespace() || *c == ' ')
+                .collect::<String>();
+
+            println!("[{id:>6}] {snip}");
+        }
     }
 
-    let count = matches as u64;
-    let words = story.num_words as u64;
-
-    vec![Stat { date, count, words }]
+    Stat {
+        story: id,
+        count,
+        chars,
+    }
 }
 
 fn main() {
@@ -58,37 +78,15 @@ fn main() {
 
     let fetcher = Fetcher::new(&argv[1]).unwrap();
 
-    let pattern = RegexBuilder::new(PATTERN)
-        .case_insensitive(true)
-        .build()
-        .unwrap();
-
     let stats = fetcher
         .index()
         .par_iter()
-        .progress_count(fetcher.index().len() as u64)
         .map(|story| (story, fetcher.read(story).unwrap()))
-        .flat_map_iter(|(story, data)| count(&pattern, story, data))
-        .collect::<Vec<Stat>>();
-
-    // TODO: Finer granularity for better graphing.
-    let mut yearly = HashMap::<i32, (u64, u64)>::new();
+        .map(|(story, data)| count(story, data))
+        .filter(|stat| stat.count != 0)
+        .collect::<Vec<_>>();
 
     for stat in stats {
-        let year = stat.date.year();
-        let value = yearly.remove(&year).unwrap_or_else(|| (0, 0));
-
-        yearly.insert(year, (value.0 + stat.count, value.1 + stat.words));
-    }
-
-    let mut yearly = yearly.into_iter().collect::<Vec<_>>();
-
-    yearly.sort();
-
-    for (year, (count, words)) in yearly.into_iter() {
-        let modifier = 1_000_000f64 / words as f64;
-        let hpm = modifier * count as f64;
-
-        println!("{year}: {hpm:.04}");
+        println!("{stat:?}");
     }
 }

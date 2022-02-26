@@ -12,7 +12,7 @@ members = [
 ]
 
 default-members = [
-    "cli",
+    "hpm",
 ]
 
 [profile.dev.package."*"]
