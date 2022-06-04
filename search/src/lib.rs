@@ -12,15 +12,16 @@ use std::time::Instant;
 use rayon::iter::ParallelIterator;
 use zip::read::ZipArchive;
 
+use tantivy::Index;
+use tantivy::IndexSettings;
+use tantivy::ReloadPolicy;
 use tantivy::collector::TopDocs;
 use tantivy::directory::MmapDirectory;
 use tantivy::query::QueryParser;
-use tantivy::schema;
 use tantivy::schema::Document;
 use tantivy::schema::Schema;
 use tantivy::schema::Value;
-use tantivy::Index;
-use tantivy::ReloadPolicy;
+use tantivy::schema;
 
 use thread_local::ThreadLocal;
 
@@ -73,7 +74,8 @@ impl Searcher {
 
         std::fs::create_dir_all(&directory).unwrap();
         let store = MmapDirectory::open(&directory).unwrap();
-        let index = Index::create(store, schema).unwrap();
+        let settings = IndexSettings::default();
+        let index = Index::create(store, schema, settings).unwrap();
 
         let schema = index.schema();
         let sid = schema.get_field("sid").unwrap();
@@ -116,7 +118,7 @@ impl Searcher {
                 text.clear();
             }
 
-            writer.add_document(doc);
+            writer.add_document(doc).unwrap();
         });
 
         writer.commit().unwrap();
