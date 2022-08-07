@@ -1,0 +1,21 @@
+[package]
+name = "fimfareader-gtk"
+version = "0.1.0"
+authors = ["Joakim Soderlund <joakim.soderlund@gmail.com>"]
+edition = "2021"
+
+[dependencies.fimfareader]
+path = ".."
+
+[dependencies.fimfareader-query]
+path = "../query"
+
+[dependencies.relm4]
+git = "https://github.com/Relm4/Relm4.git"
+features = ["all"]
+
+[dependencies.relm4-macros]
+git = "https://github.com/Relm4/Relm4.git"
+
+[dependencies.relm4-components]
+git = "https://github.com/Relm4/Relm4.git"

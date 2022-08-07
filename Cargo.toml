@@ -7,11 +7,13 @@ edition = "2021"
 [workspace]
 members = [
     "cli",
+    "gtk",
     "query",
 ]
 
 default-members = [
     "cli",
+    "gtk",
 ]
 
 [profile.release]
