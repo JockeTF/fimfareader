@@ -16,7 +16,7 @@ where
     fn get(&self, value: &T) -> Option<&'static T> {
         let store = self.0.read().unwrap();
 
-        store.get(value).map(|value| *value)
+        store.get(value).copied()
     }
 
     fn set(&self, value: T) -> &'static T {

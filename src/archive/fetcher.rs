@@ -1,8 +1,10 @@
 //! Archive fetcher.
 
 use std::fs::File;
+use std::io::BufReader;
 use std::io::ErrorKind as IoErrorKind;
-use std::io::{BufReader, Read, Seek};
+use std::io::Read;
+use std::io::Seek;
 use std::path::Path;
 use std::sync::Mutex;
 
@@ -13,7 +15,8 @@ use zip::result::ZipError;
 
 use super::parser::parse;
 use super::story::Story;
-use crate::error::{Error, Result};
+use crate::error::Error;
+use crate::error::Result;
 
 pub struct Fetcher<T: Read + Seek> {
     archive: Mutex<ZipArchive<T>>,
@@ -75,9 +78,9 @@ impl<T: Read + Seek> Fetcher<T> {
 
         let path = &story.archive.path;
 
-        let mut archive = self.archive.lock().map_err(|e| match e {
-            _ => Error::archive("Could not acquire fetcher lock"),
-        })?;
+        let Ok(mut archive) = self.archive.lock() else {
+            return Err(Error::archive("Could not acquire fetcher lock"));
+        };
 
         let mut file = archive.by_name(path).map_err(|e| match e {
             FileNotFound => Error::archive("Missing story data"),
@@ -87,9 +90,9 @@ impl<T: Read + Seek> Fetcher<T> {
         let size = file.size() as usize;
         let mut buf = Vec::with_capacity(size);
 
-        file.read_to_end(&mut buf).map_err(|e| match e {
-            _ => Error::archive("Could not read story data"),
-        })?;
+        let Ok(_) = file.read_to_end(&mut buf) else {
+            return Err(Error::archive("Could not read story data"));
+        };
 
         Ok(buf)
     }

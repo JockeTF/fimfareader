@@ -1,7 +1,8 @@
 //! Index parser.
 
 use std::io::BufRead;
-use std::sync::mpsc::{channel, Receiver};
+use std::sync::mpsc::channel;
+use std::sync::mpsc::Receiver;
 use std::thread::spawn;
 
 use rayon::prelude::*;
@@ -20,9 +21,9 @@ pub fn parse(reader: impl BufRead) -> Result<Vec<Story>> {
     let rx = spawn_parser(rx);
 
     for line in reader.lines() {
-        let line = line.map_err(|e| match e {
-            _ => Error::custom("Could not read line"),
-        })?;
+        let Ok(line) = line else {
+            return Err(Error::custom("Could not read line"));
+        };
 
         if line.len() == 1 {
             wrappers.push_str(&line);
@@ -46,9 +47,11 @@ pub fn parse(reader: impl BufRead) -> Result<Vec<Story>> {
         return Err(Error::custom("Invalid file structure"));
     }
 
-    rx.recv().map_err(|e| match e {
-        _ => Error::custom("Missing parser result"),
-    })?
+    let Ok(result) = rx.recv() else {
+        return Err(Error::custom("Missing parser result"));
+    };
+
+    result
 }
 
 fn spawn_parser(stream: Receiver<String>) -> Receiver<Result<Vec<Story>>> {
@@ -92,9 +95,9 @@ fn deserialize(line: String) -> Result<Story> {
 
     let story: Story = from_str(json)?;
 
-    let key: i64 = skey.parse().map_err(|e| match e {
-        _ => Error::custom("Invalid line key"),
-    })?;
+    let Ok(key) = skey.parse::<i64>() else {
+        return Err(Error::custom("Invalid line key"));
+    };
 
     if key != story.id {
         return Err(Error::custom("Line key mismatch"));

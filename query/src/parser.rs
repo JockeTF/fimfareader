@@ -110,9 +110,9 @@ fn item(input: &str) -> IResult<&str, Filter> {
     let result = tuple((source, operator, target))(input)?;
     let (left, (src, op, value)) = result;
 
-    let filter = optimize(src, op, &value).map_err(|e| match e {
-        _ => Err::Failure((input, NomErrorKind::Permutation)),
-    })?;
+    let Ok(filter) = optimize(src, op, &value) else {
+        return Err(Err::Failure((input, NomErrorKind::Permutation)));
+    };
 
     Ok((left, filter))
 }

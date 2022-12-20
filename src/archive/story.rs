@@ -3,7 +3,8 @@
 use chrono::prelude::*;
 use lazy_static::lazy_static;
 use serde::de::Error;
-use serde::{Deserialize, Deserializer};
+use serde::Deserialize;
+use serde::Deserializer;
 use serde_json::Value;
 
 use super::interner::Interner;
@@ -184,16 +185,16 @@ fn string_to_id<'de, D>(d: D) -> Result<i64, D::Error>
 where
     D: Deserializer<'de>,
 {
-    let value = Value::deserialize(d)?;
-
-    if value.is_i64() {
-        Ok(value.as_i64().unwrap())
-    } else if value.is_string() {
-        value.as_str().unwrap().parse().map_err(|e| match e {
-            _ => Error::custom("Could not parse ID string"),
-        })
-    } else {
-        Err(Error::custom("Invalid type for ID value"))
+    match Value::deserialize(d)? {
+        Value::Number(value) => match value.as_i64() {
+            Some(value) => Ok(value),
+            _ => Err(Error::custom("Could not parse ID number")),
+        },
+        Value::String(value) => match value.parse::<i64>() {
+            Ok(value) => Ok(value),
+            _ => Err(Error::custom("Could not parse ID string")),
+        },
+        _ => Err(Error::custom("Invalid type for ID value")),
     }
 }
 
@@ -218,9 +219,9 @@ impl<'de> Deserialize<'de> for Color {
             .and_then(|value| value.as_str())
             .ok_or_else(|| Error::custom("Color is missing hex value"))?;
 
-        let array = hex::decode(text).map_err(|e| match e {
-            _ => Error::custom("Color hex has invalid value"),
-        })?;
+        let Ok(array) = hex::decode(text) else {
+            return Err(Error::custom("Color hex has invalid value"));
+        };
 
         match array[..] {
             [red, green, blue] => Ok(Color { red, green, blue }),

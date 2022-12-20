@@ -2,15 +2,18 @@
 
 use chrono::prelude::*;
 
-use chrono_english::{parse_date_string, Dialect};
+use chrono_english::parse_date_string;
+use chrono_english::Dialect;
 
 use regex::escape;
 use regex::RegexBuilder;
 
 use fimfareader::archive::Story;
-use fimfareader::error::{Error, Result};
+use fimfareader::error::Error;
+use fimfareader::error::Result;
 
-use super::parser::{Operator, Source};
+use super::parser::Operator;
+use super::parser::Source;
 
 use Operator::*;
 use Source::*;
@@ -43,9 +46,9 @@ fn strfn(f: StrFn, op: Operator, value: &str) -> Result<Filter> {
         .size_limit(1_048_576)
         .build();
 
-    let regex = result.map_err(|e| match e {
-        _ => Error::query("Invalid value for fuzzy match"),
-    })?;
+    let Ok(regex) = result else {
+        return Err(Error::query("Invalid value for fuzzy match"));
+    };
 
     match op {
         Exact => ok!(move |s| f(s) == exact),
@@ -55,9 +58,9 @@ fn strfn(f: StrFn, op: Operator, value: &str) -> Result<Filter> {
 }
 
 fn intfn(f: IntFn, op: Operator, value: &str) -> Result<Filter> {
-    let value: i64 = value.parse().map_err(|e| match e {
-        _ => Error::query("Invalid value for number type"),
-    })?;
+    let Ok(value) = value.parse() else {
+        return Err(Error::query("Invalid value for number type"));
+    };
 
     match op {
         Exact => ok!(move |s| f(s) == value),
@@ -68,11 +71,9 @@ fn intfn(f: IntFn, op: Operator, value: &str) -> Result<Filter> {
 }
 
 fn dtufn(f: DtuFn, op: Operator, value: &str) -> Result<Filter> {
-    let parsed = parse_date_string(value, Utc::now(), Dialect::Uk);
-
-    let value: DateTime<Utc> = parsed.map_err(|e| match e {
-        _ => Error::query("Invalid value for date type"),
-    })?;
+    let Ok(value) = parse_date_string(value, Utc::now(), Dialect::Uk) else {
+        return Err(Error::query("Invalid value for date type"));
+    };
 
     match op {
         Exact => ok!(move |s| match f(s) {
