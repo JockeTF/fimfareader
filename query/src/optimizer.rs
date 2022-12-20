@@ -74,15 +74,13 @@ fn dtufn(f: DtuFn, op: Operator, value: &str) -> Result<Filter> {
         _ => Error::query("Invalid value for date type"),
     })?;
 
-    let date = value.date();
-
     match op {
         Exact => ok!(move |s| match f(s) {
             Some(dt) => *dt == value,
             None => false,
         }),
         Fuzzy => ok!(move |s| match f(s) {
-            Some(dt) => dt.date() == date,
+            Some(dt) => dt.date_naive() == value.date_naive(),
             None => false,
         }),
         LessThan => ok!(move |s| match f(s) {
