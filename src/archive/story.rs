@@ -126,15 +126,18 @@ pub struct Color {
     pub blue: u8,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum CompletionStatus {
     Cancelled,
     Complete,
+    #[serde(alias = "on hiatus")]
     Hiatus,
     Incomplete,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum ContentRating {
     Everyone,
     Mature,
@@ -150,7 +153,8 @@ pub struct CoverImage {
     pub thumbnail: String,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum Status {
     ApproveQueue,
     NotVisible,
@@ -233,64 +237,6 @@ impl<'de> Deserialize<'de> for Color {
         match array[..] {
             [red, green, blue] => Ok(Color { red, green, blue }),
             _ => Err(Error::custom("Color hex has invalid length")),
-        }
-    }
-}
-
-impl CompletionStatus {
-    const FIELDS: &'static [&'static str] =
-        &["cancelled", "complete", "hiatus", "incomplete"];
-}
-
-impl<'de> Deserialize<'de> for CompletionStatus {
-    fn deserialize<D>(d: D) -> Result<CompletionStatus, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        match String::deserialize(d)?.as_ref() {
-            "cancelled" => Ok(CompletionStatus::Cancelled),
-            "complete" => Ok(CompletionStatus::Complete),
-            "hiatus" | "on hiatus" => Ok(CompletionStatus::Hiatus),
-            "incomplete" => Ok(CompletionStatus::Incomplete),
-            value => Err(Error::unknown_field(value, Self::FIELDS)),
-        }
-    }
-}
-
-impl ContentRating {
-    const FIELDS: &'static [&'static str] = &["everyone", "mature", "teen"];
-}
-
-impl<'de> Deserialize<'de> for ContentRating {
-    fn deserialize<D>(d: D) -> Result<ContentRating, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        match String::deserialize(d)?.as_ref() {
-            "everyone" => Ok(ContentRating::Everyone),
-            "mature" => Ok(ContentRating::Mature),
-            "teen" => Ok(ContentRating::Teen),
-            value => Err(Error::unknown_field(value, Self::FIELDS)),
-        }
-    }
-}
-
-impl Status {
-    const FIELDS: &'static [&'static str] =
-        &["approve_queue", "not_visible", "post_queue", "visible"];
-}
-
-impl<'de> Deserialize<'de> for Status {
-    fn deserialize<D>(d: D) -> Result<Status, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        match String::deserialize(d)?.as_ref() {
-            "approve_queue" => Ok(Status::ApproveQueue),
-            "not_visible" => Ok(Status::NotVisible),
-            "post_queue" => Ok(Status::PostQueue),
-            "visible" => Ok(Status::Visible),
-            value => Err(Error::unknown_field(value, Self::FIELDS)),
         }
     }
 }
