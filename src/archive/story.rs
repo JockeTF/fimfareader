@@ -14,6 +14,7 @@ lazy_static! {
 }
 
 #[derive(Clone, Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct Story {
     pub archive: Archive,
     pub author: Author,
@@ -50,6 +51,7 @@ pub struct Story {
 }
 
 #[derive(Clone, Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct Archive {
     pub date_checked: Option<DateTime<Utc>>,
     pub date_created: Option<DateTime<Utc>>,
@@ -59,6 +61,7 @@ pub struct Archive {
 }
 
 #[derive(Clone, Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct Author {
     pub avatar: Option<Avatar>,
     pub bio_html: Option<String>,
@@ -73,6 +76,7 @@ pub struct Author {
 }
 
 #[derive(Clone, Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct Avatar {
     #[serde(rename = "16")]
     pub x16: Option<String>,
@@ -101,6 +105,7 @@ pub struct Avatar {
 }
 
 #[derive(Clone, Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct Chapter {
     pub chapter_number: i32,
     pub date_modified: Option<DateTime<Utc>>,
@@ -137,6 +142,7 @@ pub enum ContentRating {
 }
 
 #[derive(Clone, Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct CoverImage {
     pub full: String,
     pub large: String,
@@ -153,6 +159,7 @@ pub enum Status {
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, Hash, PartialEq)]
+#[serde(deny_unknown_fields)]
 pub struct Tag {
     pub id: i64,
     pub name: String,
