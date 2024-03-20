@@ -3,20 +3,20 @@
 use std::env::args;
 use std::time::Instant;
 
-use rustyline::Editor;
+use rustyline::DefaultEditor;
+use rustyline::Result;
 
 use fimfareader::prelude::*;
 use fimfareader_query::parse;
 
 fn exit(error: Error) -> ! {
     eprintln!("{}", error);
-
     std::process::exit(1)
 }
 
-fn main() {
+fn main() -> Result<()> {
     let argv = args().collect::<Vec<String>>();
-    let mut editor = Editor::<()>::new();
+    let mut editor = DefaultEditor::new()?;
 
     if argv.len() != 2 {
         eprintln!("Usage: fimfareader <ARCHIVE>");
@@ -35,7 +35,7 @@ fn main() {
     println!("The archive contains {} stories.", count);
 
     while let Ok(line) = editor.readline(">>> ") {
-        editor.add_history_entry(&line);
+        editor.add_history_entry(&line)?;
 
         let filter = match parse(&line) {
             Ok(filter) => filter,
@@ -63,4 +63,6 @@ fn main() {
             println!("[{}] {}", key, title);
         }
     }
+
+    Ok(())
 }
