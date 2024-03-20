@@ -13,11 +13,11 @@ version = "*"
 [dependencies.chrono-english]
 version = "*"
 
+[dependencies.nom]
+version = "7"
+
 [dependencies.rayon]
 version = "*"
 
 [dependencies.regex]
 version = "*"
-
-[dependencies.nom]
-version = "5"
