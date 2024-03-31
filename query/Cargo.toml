@@ -10,7 +10,7 @@ path = ".."
 [dependencies.chrono]
 version = "*"
 
-[dependencies.chrono-english]
+[dependencies.dateparser]
 version = "*"
 
 [dependencies.nom]

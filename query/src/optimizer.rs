@@ -1,9 +1,7 @@
 //! Query optimizer.
 
 use chrono::prelude::*;
-
-use chrono_english::parse_date_string;
-use chrono_english::Dialect;
+use dateparser::parse_with_timezone;
 
 use regex::escape;
 use regex::RegexBuilder;
@@ -71,7 +69,7 @@ fn intfn(f: IntFn, op: Operator, value: &str) -> Result<Filter> {
 }
 
 fn dtufn(f: DtuFn, op: Operator, value: &str) -> Result<Filter> {
-    let Ok(value) = parse_date_string(value, Utc::now(), Dialect::Uk) else {
+    let Ok(value) = parse_with_timezone(value, &Local) else {
         return Err(Error::query("Invalid value for date type"));
     };
 
