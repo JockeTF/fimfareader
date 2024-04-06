@@ -1,13 +1,10 @@
 //! Main module.
 
 use std::env::args;
-use std::fs::File;
-use std::io::BufReader;
 use std::time::Instant;
 
 use rustyline::DefaultEditor;
 use rustyline::Result;
-use zip::ZipArchive;
 
 use fimfareader::prelude::*;
 use fimfareader_search::Searcher;
@@ -37,14 +34,7 @@ fn main() -> Result<()> {
     println!("Finished loading in {} milliseconds.", finish);
     println!("The archive contains {} stories.", count);
 
-    let opener = || {
-        let file = File::open(&argv[1]).unwrap();
-        let reader = BufReader::new(file);
-
-        ZipArchive::new(reader).unwrap()
-    };
-
-    let searcher = Searcher::new(&fetcher, &opener);
+    let searcher = Searcher::new(&fetcher);
 
     while let Ok(line) = editor.readline(">>> ") {
         editor.add_history_entry(&line)?;

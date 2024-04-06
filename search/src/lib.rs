@@ -1,108 +1,90 @@
 //! Main module.
 
-use std::cell::RefCell;
+use std::fs::create_dir_all;
+use std::io::stdout;
 use std::io::Cursor;
 use std::io::Read;
 use std::io::Seek;
+use std::io::Write;
 use std::path::Path;
-use std::sync::atomic::AtomicUsize;
-use std::sync::atomic::Ordering;
 use std::time::Instant;
 
-use rayon::iter::ParallelIterator;
-use thread_local::ThreadLocal;
-use zip::read::ZipArchive;
-
 use tantivy::collector::TopDocs;
-use tantivy::directory::MmapDirectory;
 use tantivy::query::QueryParser;
 use tantivy::schema;
 use tantivy::schema::Schema;
 use tantivy::schema::Value;
 use tantivy::Index;
-use tantivy::IndexSettings;
 use tantivy::ReloadPolicy;
 use tantivy::TantivyDocument;
+use zip::read::ZipArchive;
 
 use fimfareader::prelude::*;
 
 pub struct Searcher {
-    schema: Schema,
     index: Index,
 }
 
 impl Searcher {
-    pub fn new<T, F>(fetcher: &Fetcher<T>, f: &F) -> Self
+    pub fn new<T>(fetcher: &Fetcher<T>) -> Self
     where
         T: Read + Seek + Send,
-        F: Fn() -> ZipArchive<T> + Sync,
     {
+        Searcher {
+            index: Self::load_index(fetcher),
+        }
+    }
+
+    fn schema() -> Schema {
         let mut builder = Schema::builder();
+
         builder.add_i64_field("sid", schema::INDEXED | schema::STORED);
         builder.add_text_field("content", schema::TEXT);
-        let schema = builder.build();
 
-        let index = Self::load_index(schema.clone(), fetcher, f);
-
-        Searcher { schema, index }
+        builder.build()
     }
 
-    fn load_index<T, F>(schema: Schema, fetcher: &Fetcher<T>, f: &F) -> Index
+    fn load_index<T>(fetcher: &Fetcher<T>) -> Index
     where
         T: Read + Seek + Send,
-        F: Fn() -> ZipArchive<T> + Sync,
     {
         let identity = fetcher.identity().unwrap();
-        let directory = Path::new("cache").join(identity);
+        let path = Path::new("cache").join(identity);
 
-        if !directory.exists() {
-            Self::make_index(schema.clone(), fetcher, f);
+        if path.exists() {
+            Index::open_in_dir(path).unwrap()
+        } else {
+            Self::make_index(&path, fetcher)
         }
-
-        let store = MmapDirectory::open(&directory).unwrap();
-        Index::open_or_create(store, schema).unwrap()
     }
 
-    fn make_index<T, F>(schema: Schema, fetcher: &Fetcher<T>, f: &F)
+    fn make_index<T>(path: &Path, fetcher: &Fetcher<T>) -> Index
     where
         T: Read + Seek + Send,
-        F: Fn() -> ZipArchive<T> + Sync,
     {
-        let identity = fetcher.identity().unwrap();
-        let directory = Path::new("cache").join(identity);
+        let start = Instant::now();
+        print!("\r\rIndexing archive...\r\r");
+        create_dir_all(path).unwrap();
 
-        std::fs::create_dir_all(&directory).unwrap();
-        let store = MmapDirectory::open(&directory).unwrap();
-        let settings = IndexSettings::default();
-        let index = Index::create(store, schema, settings).unwrap();
+        let schema = Self::schema();
+        let index = Index::create_in_dir(path, schema).unwrap();
+        let mut writer = index.writer(1_073_741_824).unwrap();
+        let mut buffer = String::with_capacity(1_048_576);
 
         let schema = index.schema();
-        let sid = schema.get_field("sid").unwrap();
+        let identifier = schema.get_field("sid").unwrap();
         let content = schema.get_field("content").unwrap();
-        let mut writer = index.writer(536_870_912).unwrap();
+        let story_count = fetcher.iter().count() as f64;
 
-        let counter = AtomicUsize::new(0);
-        let total = fetcher.iter().count();
-        let start = Instant::now();
+        for (i, story) in fetcher.iter().enumerate() {
+            let progress = (i * 100) as f64 / story_count;
+            print!("\r\rIndexing archive... {progress:.2}%\r\r");
 
-        let local = ThreadLocal::new();
+            let cursor = Cursor::new(fetcher.read(story).unwrap());
+            let mut epub = ZipArchive::new(cursor).unwrap();
+            let mut document = TantivyDocument::default();
 
-        fetcher.par_iter().for_each(|story| {
-            let mut doc = TantivyDocument::default();
-
-            let mut arch = local.get_or(|| RefCell::new(f())).borrow_mut();
-            let mut file = arch.by_name(&story.archive.path).unwrap();
-            let mut data = Vec::with_capacity(file.size() as usize);
-            let mut text = String::with_capacity(1_048_576);
-
-            file.read_to_end(&mut data).unwrap();
-            let mut epub = ZipArchive::new(Cursor::new(data)).unwrap();
-
-            let count = counter.fetch_add(1, Ordering::SeqCst);
-            let percentage = (count as f64 / total as f64) * 100f64;
-            print!("\r\rIndexing archive... {:.2}%\r\r", percentage);
-
-            doc.add_i64(sid, story.id);
+            document.add_i64(identifier, story.id);
 
             for i in 0..epub.len() {
                 let mut file = epub.by_index(i).unwrap();
@@ -111,18 +93,24 @@ impl Searcher {
                     continue;
                 }
 
-                file.read_to_string(&mut text).unwrap();
-                doc.add_text(content, &text);
-                text.clear();
+                file.read_to_string(&mut buffer).unwrap();
+                document.add_text(content, &buffer);
+                buffer.clear();
             }
 
-            writer.add_document(doc).unwrap();
-        });
+            writer.add_document(document).unwrap();
+        }
+
+        print!("\r\rCommitting archive index...\r\r");
+        stdout().flush().unwrap();
 
         writer.commit().unwrap();
+        writer.wait_merging_threads().unwrap();
 
         let finish = (Instant::now() - start).as_secs();
-        println!("Index generated in {} seconds.", finish);
+        println!("Index generated in {finish} seconds.");
+
+        index
     }
 
     pub fn search(&self, text: &str) -> Vec<(i64, f32)> {
@@ -133,20 +121,22 @@ impl Searcher {
             .try_into()
             .unwrap();
 
-        let searcher = reader.searcher();
-        let identitfier = self.schema.get_field("sid").unwrap();
-        let content = self.schema.get_field("content").unwrap();
-        let parser = QueryParser::for_index(&self.index, vec![content]);
+        let schema = self.index.schema();
+        let identifier = schema.get_field("sid").unwrap();
+        let content = schema.get_field("content").unwrap();
 
+        let parser = QueryParser::for_index(&self.index, vec![content]);
+        let query = parser.parse_query(text).unwrap();
+
+        let searcher = reader.searcher();
         let limit = TopDocs::with_limit(32);
-        let query = parser.parse_query(&text).unwrap();
         let docs = searcher.search(&query, &limit).unwrap();
 
         docs.into_iter()
             .map(|(score, address)| {
                 let doc: TantivyDocument = searcher.doc(address).unwrap();
 
-                match doc.get_first(identitfier).map(|v| v.as_i64()) {
+                match doc.get_first(identifier).map(|v| v.as_i64()) {
                     Some(Some(value)) => (value, score),
                     _ => panic!("Invalid story key type!"),
                 }

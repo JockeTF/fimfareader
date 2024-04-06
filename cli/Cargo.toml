@@ -13,8 +13,3 @@ path = "../search"
 [dependencies.rustyline]
 default-features = false
 version = "14"
-
-[dependencies.zip]
-version = "*"
-features = ["deflate"]
-default-features = false

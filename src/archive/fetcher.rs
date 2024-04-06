@@ -98,13 +98,13 @@ impl<T: Read + Seek> Fetcher<T> {
     }
 
     pub fn identity(&self) -> Result<String> {
-        let mut archive = self.archive.lock().map_err(|e| match e {
-            _ => Error::archive("Could not acquire fetcher lock"),
-        })?;
+        let Ok(mut archive) = self.archive.lock() else {
+            return Err(Error::archive("Could not acquire fetcher lock"));
+        };
 
-        let index = archive.by_name("index.json").map_err(|e| match e {
-            _ => Error::archive("Could not open archive index"),
-        })?;
+        let Ok(index) = archive.by_name("index.json") else {
+            return Err(Error::archive("Could not open archive index"));
+        };
 
         Ok(format!("{}", index.crc32()))
     }
