@@ -2,6 +2,7 @@
 
 use chrono::DateTime;
 use chrono::Utc;
+use derive_more::From;
 
 use nom::branch::alt;
 use nom::bytes::complete::escaped;
@@ -27,94 +28,82 @@ use nom::IResult;
 use fimfareader::archive::Story;
 use fimfareader::error::*;
 
-use super::optimizer::optimize;
+use crate::optimizer::optimize;
 
-type Filter = Box<dyn Fn(&Story) -> bool + Sync>;
+pub(crate) type DateOpt = Option<DateTime<Utc>>;
+pub(crate) type Field<T> = &'static (dyn Fn(&Story) -> &T + Sync);
+pub(crate) type Filter = Box<dyn Fn(&Story) -> bool + Sync>;
 
-pub enum Source {
-    IntFn(Box<dyn Fn(&Story) -> i64 + Sync>),
-    StrFn(Box<dyn Fn(&Story) -> &str + Sync>),
-    DtuFn(Box<dyn Fn(&Story) -> &Option<DateTime<Utc>> + Sync>),
+#[derive(From)]
+pub(crate) enum Source {
+    Int(Field<i32>),
+    Str(Field<Box<str>>),
+    Dto(Field<DateOpt>),
 }
 
 #[derive(Clone)]
-pub enum Operator {
+pub(crate) enum Op {
     Exact,
     Fuzzy,
     LessThan,
     MoreThan,
 }
 
-macro_rules! sfn {
-    ($tag:expr => $func:expr) => {
-        preceded(tag($tag), |input| {
-            Ok((input, Source::StrFn(Box::new($func))))
-        })
-    };
-}
-
-macro_rules! ifn {
-    ($tag:expr => $func:expr) => {{
-        preceded(tag($tag), |input| {
-            Ok((input, Source::IntFn(Box::new($func))))
-        })
-    }};
-}
-
-macro_rules! dfn {
-    ($tag:expr => $func:expr) => {
-        preceded(tag($tag), |input| {
-            Ok((input, Source::DtuFn(Box::new($func))))
-        })
+macro_rules! ext {
+    ($($tag:literal => $($path:ident).+),+,) => {
+        alt(($(preceded(tag($tag), |input| {
+            let field: Field<_> = &|story| &story.$($path).+;
+            Ok((input, Source::from(field)))
+        })),+))
     };
 }
 
 fn source(input: &str) -> IResult<&str, Source> {
-    let story = alt((
-        ifn!("id" => |s| s.id),
-        sfn!("story" => |s| &s.title),
-        sfn!("title" => |s| &s.title),
-        sfn!("description" => |s| &s.description_html),
-        sfn!("short description" => |s| &s.short_description),
-        sfn!("url" => |s| &s.url),
-        dfn!("modified" => |s| &s.date_modified),
-        dfn!("published" => |s| &s.date_published),
-        dfn!("updated" => |s| &s.date_updated),
-        ifn!("chapters" => |s| i64::from(s.num_chapters)),
-        ifn!("comments" => |s| i64::from(s.num_comments)),
-        ifn!("dislikes" => |s| i64::from(s.num_dislikes)),
-        ifn!("likes" => |s| i64::from(s.num_likes)),
-        ifn!("total views" => |s| i64::from(s.total_num_views)),
-        ifn!("views" => |s| i64::from(s.num_views)),
-        ifn!("words" => |s| i64::from(s.num_words)),
-    ));
+    let story = ext! {
+        "id" => id,
+        "url" => url,
+        "story" => title,
+        "title" => title,
+        "description" => description_html,
+        "short description" => short_description,
+        "modified" => date_modified,
+        "published" => date_published,
+        "updated" => date_updated,
+        "chapters" => num_chapters,
+        "comments" => num_comments,
+        "dislikes" => num_dislikes,
+        "likes" => num_likes,
+        "total views" => total_num_views,
+        "views" => num_views,
+        "words" => num_words,
+    };
 
-    let author = alt((
-        sfn!("author" => |s| &s.author.name),
-        sfn!("author name" => |s| &s.author.name),
-        ifn!("author id" => |s| s.author.id),
-        dfn!("author joined" => |s| &s.author.date_joined),
-    ));
+    let author = ext! {
+        "author" => author.name,
+        "author name" => author.name,
+        "author id" => author.id,
+        "author joined" => author.date_joined,
+    };
 
-    let archive = alt((
-        sfn!("path" => |s| &s.archive.path),
-        sfn!("archive" => |s| &s.archive.path),
-        sfn!("archive path" => |s| &s.archive.path),
-        dfn!("entry checked" => |s| &s.archive.date_checked),
-        dfn!("entry created" => |s| &s.archive.date_created),
-        dfn!("entry fetched" => |s| &s.archive.date_fetched),
-        dfn!("entry updated" => |s| &s.archive.date_updated),
-    ));
+    let archive = ext! {
+        "path" => archive.path,
+        "archive" => archive.path,
+        "archive path" => archive.path,
+        "entry checked" => archive.date_checked,
+        "entry created" => archive.date_created,
+        "entry fetched" => archive.date_fetched,
+        "entry updated" => archive.date_updated,
+    };
 
     preceded(space0, alt((story, author, archive)))(input)
 }
 
-fn operator(input: &str) -> IResult<&str, Operator> {
+fn operator(input: &str) -> IResult<&str, Op> {
     let operator = alt((
-        value(Operator::Exact, char('=')),
-        value(Operator::Fuzzy, char(':')),
-        value(Operator::LessThan, char('<')),
-        value(Operator::MoreThan, char('>')),
+        value(Op::Exact, char('=')),
+        value(Op::Fuzzy, char(':')),
+        value(Op::LessThan, char('<')),
+        value(Op::MoreThan, char('>')),
     ));
 
     preceded(space0, operator)(input)

@@ -32,14 +32,14 @@ pub struct Story {
     pub date_updated: Option<DateTime<Utc>>,
     #[serde(deserialize_with = "null_to_html")]
     pub description_html: Box<str>,
-    pub id: i64,
+    pub id: i32,
     pub num_chapters: i32,
     pub num_comments: i32,
     pub num_dislikes: i32,
     pub num_likes: i32,
     pub num_views: i32,
     pub num_words: i32,
-    pub prequel: Option<i64>,
+    pub prequel: Option<i32>,
     pub published: bool,
     pub rating: i32,
     #[serde(deserialize_with = "null_to_text")]
@@ -71,7 +71,7 @@ pub struct Author {
     pub bio_html: Option<Box<str>>,
     pub date_joined: Option<DateTime<Utc>>,
     #[serde(deserialize_with = "string_to_id")]
-    pub id: i64,
+    pub id: i32,
     pub name: Box<str>,
     pub num_blog_posts: Option<i32>,
     pub num_followers: Option<i32>,
@@ -114,7 +114,7 @@ pub struct Chapter {
     pub chapter_number: i32,
     pub date_modified: Option<DateTime<Utc>>,
     pub date_published: Option<DateTime<Utc>>,
-    pub id: i64,
+    pub id: i32,
     pub num_views: i32,
     pub num_words: i32,
     pub published: bool,
@@ -169,7 +169,7 @@ pub enum Status {
 #[derive(Clone, Debug, Deserialize, Eq, Hash, PartialEq)]
 #[serde(deny_unknown_fields)]
 pub struct Tag {
-    pub id: i64,
+    pub id: i32,
     pub name: Box<str>,
     pub old_id: Box<str>,
     pub r#type: Box<str>,
@@ -196,16 +196,16 @@ where
     }
 }
 
-fn string_to_id<'de, D>(d: D) -> Result<i64, D::Error>
+fn string_to_id<'de, D>(d: D) -> Result<i32, D::Error>
 where
     D: Deserializer<'de>,
 {
     match Value::deserialize(d)? {
-        Value::Number(value) => match value.as_i64() {
-            Some(value) => Ok(value),
+        Value::Number(value) => match value.as_i64().map(i32::try_from) {
+            Some(Ok(value)) => Ok(value),
             _ => Err(Error::custom("Could not parse ID number")),
         },
-        Value::String(value) => match value.parse::<i64>() {
+        Value::String(value) => match value.parse::<i32>() {
             Ok(value) => Ok(value),
             _ => Err(Error::custom("Could not parse ID string")),
         },

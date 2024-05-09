@@ -9,7 +9,6 @@ use std::path::Path;
 use std::sync::Mutex;
 
 use rayon::prelude::*;
-
 use zip::read::ZipArchive;
 use zip::result::ZipError;
 
@@ -74,7 +73,7 @@ impl<T: Read + Seek> Fetcher<T> {
         result
     }
 
-    pub fn fetch(&self, key: i64) -> Option<&Story> {
+    pub fn fetch(&self, key: i32) -> Option<&Story> {
         match self.index.binary_search_by_key(&key, |story| story.id) {
             Ok(i) => self.index.get(i),
             Err(_) => None,

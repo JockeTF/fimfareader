@@ -4,6 +4,11 @@ version = "0.1.0"
 authors = ["Joakim Soderlund <joakim.soderlund@gmail.com>"]
 edition = "2021"
 
+[dependencies.derive_more]
+default-features = false
+features = ["from"]
+version = "0.99.17"
+
 [dependencies.fimfareader]
 path = ".."
 
