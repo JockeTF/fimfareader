@@ -95,7 +95,7 @@ fn deserialize(line: String) -> Result<Story> {
 
     let story: Story = from_str(json)?;
 
-    let Ok(key) = skey.parse::<i64>() else {
+    let Ok(key) = skey.parse::<i32>() else {
         return Err(Error::custom("Invalid line key"));
     };
 
