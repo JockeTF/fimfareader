@@ -22,7 +22,7 @@ pub struct Story {
     pub archive: Archive,
     #[serde(deserialize_with = "author_as_static")]
     pub author: Arc<Author>,
-    pub chapters: Vec<Chapter>,
+    pub chapters: Box<[Chapter]>,
     pub color: Option<Color>,
     pub completion_status: CompletionStatus,
     pub content_rating: ContentRating,
@@ -31,7 +31,7 @@ pub struct Story {
     pub date_published: Option<DateTime<Utc>>,
     pub date_updated: Option<DateTime<Utc>>,
     #[serde(deserialize_with = "null_to_html")]
-    pub description_html: String,
+    pub description_html: Box<str>,
     pub id: i64,
     pub num_chapters: i32,
     pub num_comments: i32,
@@ -43,15 +43,15 @@ pub struct Story {
     pub published: bool,
     pub rating: i32,
     #[serde(deserialize_with = "null_to_text")]
-    pub short_description: String,
+    pub short_description: Box<str>,
     pub status: Status,
     pub submitted: bool,
     #[serde(deserialize_with = "tags_as_static")]
-    pub tags: Vec<Arc<Tag>>,
+    pub tags: Box<[Arc<Tag>]>,
     #[serde(deserialize_with = "null_to_text")]
-    pub title: String,
+    pub title: Box<str>,
     pub total_num_views: i32,
-    pub url: String,
+    pub url: Box<str>,
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -61,51 +61,51 @@ pub struct Archive {
     pub date_created: Option<DateTime<Utc>>,
     pub date_fetched: Option<DateTime<Utc>>,
     pub date_updated: Option<DateTime<Utc>>,
-    pub path: String,
+    pub path: Box<str>,
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Eq, Hash)]
 #[serde(deny_unknown_fields)]
 pub struct Author {
     pub avatar: Option<Avatar>,
-    pub bio_html: Option<String>,
+    pub bio_html: Option<Box<str>>,
     pub date_joined: Option<DateTime<Utc>>,
     #[serde(deserialize_with = "string_to_id")]
     pub id: i64,
-    pub name: String,
+    pub name: Box<str>,
     pub num_blog_posts: Option<i32>,
     pub num_followers: Option<i32>,
     pub num_stories: Option<i32>,
-    pub url: String,
+    pub url: Box<str>,
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Eq, Hash)]
 #[serde(deny_unknown_fields)]
 pub struct Avatar {
     #[serde(rename = "16")]
-    pub x16: Option<String>,
+    pub x16: Option<Box<str>>,
     #[serde(rename = "32")]
-    pub x32: Option<String>,
+    pub x32: Option<Box<str>>,
     #[serde(rename = "48")]
-    pub x48: Option<String>,
+    pub x48: Option<Box<str>>,
     #[serde(rename = "64")]
-    pub x64: Option<String>,
+    pub x64: Option<Box<str>>,
     #[serde(rename = "96")]
-    pub x96: Option<String>,
+    pub x96: Option<Box<str>>,
     #[serde(rename = "128")]
-    pub x128: Option<String>,
+    pub x128: Option<Box<str>>,
     #[serde(rename = "160")]
-    pub x160: Option<String>,
+    pub x160: Option<Box<str>>,
     #[serde(rename = "192")]
-    pub x192: Option<String>,
+    pub x192: Option<Box<str>>,
     #[serde(rename = "256")]
-    pub x256: Option<String>,
+    pub x256: Option<Box<str>>,
     #[serde(rename = "320")]
-    pub x320: Option<String>,
+    pub x320: Option<Box<str>>,
     #[serde(rename = "384")]
-    pub x384: Option<String>,
+    pub x384: Option<Box<str>>,
     #[serde(rename = "512")]
-    pub x512: Option<String>,
+    pub x512: Option<Box<str>>,
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -119,8 +119,8 @@ pub struct Chapter {
     pub num_words: i32,
     pub published: bool,
     #[serde(deserialize_with = "null_to_text")]
-    pub title: String,
-    pub url: String,
+    pub title: Box<str>,
+    pub url: Box<str>,
 }
 
 #[derive(Clone, Debug)]
@@ -151,10 +151,10 @@ pub enum ContentRating {
 #[derive(Clone, Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct CoverImage {
-    pub full: String,
-    pub large: String,
-    pub medium: String,
-    pub thumbnail: String,
+    pub full: Box<str>,
+    pub large: Box<str>,
+    pub medium: Box<str>,
+    pub thumbnail: Box<str>,
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -170,29 +170,29 @@ pub enum Status {
 #[serde(deny_unknown_fields)]
 pub struct Tag {
     pub id: i64,
-    pub name: String,
-    pub old_id: String,
-    pub r#type: String,
-    pub url: String,
+    pub name: Box<str>,
+    pub old_id: Box<str>,
+    pub r#type: Box<str>,
+    pub url: Box<str>,
 }
 
-fn null_to_html<'de, D>(d: D) -> Result<String, D::Error>
+fn null_to_html<'de, D>(d: D) -> Result<Box<str>, D::Error>
 where
     D: Deserializer<'de>,
 {
     match Option::deserialize(d)? {
         Some(text) => Ok(text),
-        None => Ok(String::from("<p></p>")),
+        None => Ok(Box::from("<p></p>")),
     }
 }
 
-fn null_to_text<'de, D>(d: D) -> Result<String, D::Error>
+fn null_to_text<'de, D>(d: D) -> Result<Box<str>, D::Error>
 where
     D: Deserializer<'de>,
 {
     match Option::deserialize(d)? {
         Some(text) => Ok(text),
-        None => Ok(String::from("")),
+        None => Ok(Box::from("")),
     }
 }
 
@@ -220,7 +220,7 @@ where
     Author::deserialize(d).map(|author| AUTHORS.intern(author))
 }
 
-fn tags_as_static<'de, D>(d: D) -> Result<Vec<Arc<Tag>>, D::Error>
+fn tags_as_static<'de, D>(d: D) -> Result<Box<[Arc<Tag>]>, D::Error>
 where
     D: Deserializer<'de>,
 {
