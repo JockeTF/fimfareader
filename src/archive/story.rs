@@ -1,5 +1,7 @@
 //! Story meta.
 
+use std::sync::Arc;
+
 use chrono::prelude::*;
 use lazy_static::lazy_static;
 use serde::de::Error;
@@ -10,14 +12,16 @@ use serde_json::Value;
 use super::interner::Interner;
 
 lazy_static! {
-    static ref TAGS: Interner<Tag> = Interner::new();
+    pub(crate) static ref AUTHORS: Interner<Author> = Interner::new();
+    pub(crate) static ref TAGS: Interner<Tag> = Interner::new();
 }
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Story {
     pub archive: Archive,
-    pub author: Author,
+    #[serde(deserialize_with = "author_as_static")]
+    pub author: Arc<Author>,
     pub chapters: Vec<Chapter>,
     pub color: Option<Color>,
     pub completion_status: CompletionStatus,
@@ -43,7 +47,7 @@ pub struct Story {
     pub status: Status,
     pub submitted: bool,
     #[serde(deserialize_with = "tags_as_static")]
-    pub tags: Vec<&'static Tag>,
+    pub tags: Vec<Arc<Tag>>,
     #[serde(deserialize_with = "null_to_text")]
     pub title: String,
     pub total_num_views: i32,
@@ -60,7 +64,7 @@ pub struct Archive {
     pub path: String,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Eq, Hash)]
 #[serde(deny_unknown_fields)]
 pub struct Author {
     pub avatar: Option<Avatar>,
@@ -75,7 +79,7 @@ pub struct Author {
     pub url: String,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Eq, Hash)]
 #[serde(deny_unknown_fields)]
 pub struct Avatar {
     #[serde(rename = "16")]
@@ -209,13 +213,22 @@ where
     }
 }
 
-fn tags_as_static<'de, D>(d: D) -> Result<Vec<&'static Tag>, D::Error>
+fn author_as_static<'de, D>(d: D) -> Result<Arc<Author>, D::Error>
 where
     D: Deserializer<'de>,
 {
-    let tags: Vec<Tag> = Vec::deserialize(d)?;
+    Author::deserialize(d).map(|author| AUTHORS.intern(author))
+}
 
-    Ok(tags.into_iter().map(|tag| TAGS.intern(tag)).collect())
+fn tags_as_static<'de, D>(d: D) -> Result<Vec<Arc<Tag>>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    Vec::deserialize(d)?
+        .into_iter()
+        .map(|tag| TAGS.intern(tag))
+        .map(Result::Ok)
+        .collect()
 }
 
 impl<'de> Deserialize<'de> for Color {

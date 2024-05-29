@@ -15,6 +15,8 @@ use zip::result::ZipError;
 
 use super::parser::parse;
 use super::story::Story;
+use crate::archive::AUTHORS;
+use crate::archive::TAGS;
 use crate::error::Error;
 use crate::error::Result;
 
@@ -63,7 +65,13 @@ impl<T: Read + Seek> Fetcher<T> {
             _ => Error::archive("Could not open story index"),
         })?;
 
-        parse(BufReader::with_capacity(1048576, file)).map_err(Error::index)
+        let reader = BufReader::with_capacity(1048576, file);
+        let result = parse(reader).map_err(Error::index);
+
+        AUTHORS.clear();
+        TAGS.clear();
+
+        result
     }
 
     pub fn fetch(&self, key: i64) -> Option<&Story> {
