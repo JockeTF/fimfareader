@@ -1,20 +1,15 @@
 //! Main module.
 
 use std::env::args;
+use std::error::Error;
+use std::result::Result;
 use std::time::Instant;
 
-use rustyline::DefaultEditor;
-use rustyline::Result;
-
-use fimfareader::prelude::*;
+use fimfareader::archive::Fetcher;
 use fimfareader_query::parse;
+use rustyline::DefaultEditor;
 
-fn exit(error: Error) -> ! {
-    eprintln!("{}", error);
-    std::process::exit(1)
-}
-
-fn main() -> Result<()> {
+fn main() -> Result<(), Box<dyn Error>> {
     let argv = args().collect::<Vec<String>>();
     let mut editor = DefaultEditor::new()?;
 
@@ -26,13 +21,12 @@ fn main() -> Result<()> {
     println!("Hellopaca, World!");
 
     let start = Instant::now();
-    let result = Fetcher::new(&argv[1]);
-    let fetcher = result.map_err(exit).unwrap();
-    let finish = (Instant::now() - start).as_millis();
+    let fetcher = Fetcher::new(&argv[1])?;
+    let finish = Instant::now() - start;
     let count = fetcher.iter().count();
 
-    println!("Finished loading in {} milliseconds.", finish);
-    println!("The archive contains {} stories.", count);
+    println!("Finished loading in {finish:?}.");
+    println!("The archive contains {count} stories.");
 
     while let Ok(line) = editor.readline(">>> ") {
         editor.add_history_entry(&line)?;
