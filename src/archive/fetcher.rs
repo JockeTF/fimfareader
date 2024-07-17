@@ -6,10 +6,10 @@ use std::io::ErrorKind as IoErrorKind;
 use std::io::Read;
 use std::io::Seek;
 use std::path::Path;
+use std::slice::Iter;
 use std::sync::Mutex;
 
 use rayon::prelude::*;
-
 use zip::read::ZipArchive;
 use zip::result::ZipError;
 
@@ -106,7 +106,7 @@ impl<T: Read + Seek> Fetcher<T> {
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &Story> {
-        self.index.iter()
+        self.into_iter()
     }
 
     pub fn filter<F>(&self, function: &F) -> Vec<&Story>
@@ -114,5 +114,14 @@ impl<T: Read + Seek> Fetcher<T> {
         F: Sync + Fn(&Story) -> bool,
     {
         self.index.par_iter().filter(|s| function(s)).collect()
+    }
+}
+
+impl<'a, T: Read + Seek> IntoIterator for &'a Fetcher<T> {
+    type IntoIter = Iter<'a, Story>;
+    type Item = &'a Story;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.index.iter()
     }
 }
