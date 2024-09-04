@@ -3,6 +3,7 @@
 use std::collections::HashSet;
 use std::hash::Hash;
 use std::sync::Arc;
+use std::sync::LazyLock;
 use std::sync::RwLock;
 
 pub struct Interner<T>(RwLock<HashSet<Arc<T>>>);
@@ -11,8 +12,8 @@ impl<T> Interner<T>
 where
     T: Eq + Hash,
 {
-    pub fn new() -> Self {
-        Self(RwLock::new(HashSet::new()))
+    pub const fn r#static() -> LazyLock<Self> {
+        LazyLock::new(Self::default)
     }
 
     fn get(&self, value: &T) -> Option<Arc<T>> {
@@ -39,5 +40,14 @@ where
 
     pub fn intern(&self, value: T) -> Arc<T> {
         self.get(&value).unwrap_or_else(|| self.set(value))
+    }
+}
+
+impl<T> Default for Interner<T>
+where
+    T: Eq + Hash,
+{
+    fn default() -> Self {
+        Self(Default::default())
     }
 }

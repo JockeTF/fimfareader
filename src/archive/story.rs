@@ -1,9 +1,9 @@
 //! Story meta.
 
 use std::sync::Arc;
+use std::sync::LazyLock;
 
 use chrono::prelude::*;
-use lazy_static::lazy_static;
 use serde::de::Error;
 use serde::Deserialize;
 use serde::Deserializer;
@@ -11,10 +11,8 @@ use serde_json::Value;
 
 use super::interner::Interner;
 
-lazy_static! {
-    pub(crate) static ref AUTHORS: Interner<Author> = Interner::new();
-    pub(crate) static ref TAGS: Interner<Tag> = Interner::new();
-}
+pub(crate) static AUTHORS: LazyLock<Interner<Author>> = Interner::r#static();
+pub(crate) static TAGS: LazyLock<Interner<Tag>> = Interner::r#static();
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
