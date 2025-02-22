@@ -12,4 +12,4 @@ path = "../query"
 
 [dependencies.rustyline]
 default-features = false
-version = "14"
+version = "15.0.0"
