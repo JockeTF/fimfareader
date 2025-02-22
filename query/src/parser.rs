@@ -4,6 +4,9 @@ use chrono::DateTime;
 use chrono::Utc;
 use derive_more::From;
 
+use nom::Err as NomErr;
+use nom::Finish;
+use nom::IResult;
 use nom::branch::alt;
 use nom::bytes::complete::escaped;
 use nom::bytes::complete::tag;
@@ -21,9 +24,6 @@ use nom::sequence::delimited;
 use nom::sequence::preceded;
 use nom::sequence::terminated;
 use nom::sequence::tuple;
-use nom::Err as NomErr;
-use nom::Finish;
-use nom::IResult;
 
 use fimfareader::archive::Story;
 use fimfareader::error::*;

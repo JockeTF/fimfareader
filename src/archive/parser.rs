@@ -1,8 +1,8 @@
 //! Index parser.
 
 use std::io::BufRead;
-use std::sync::mpsc::channel;
 use std::sync::mpsc::Receiver;
+use std::sync::mpsc::channel;
 use std::thread::spawn;
 
 use rayon::prelude::*;

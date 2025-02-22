@@ -4,9 +4,9 @@ use std::sync::Arc;
 use std::sync::LazyLock;
 
 use chrono::prelude::*;
-use serde::de::Error;
 use serde::Deserialize;
 use serde::Deserializer;
+use serde::de::Error;
 use serde_json::Value;
 
 use super::interner::Interner;

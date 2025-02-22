@@ -2,8 +2,8 @@
 
 use chrono::prelude::*;
 use dateparser::parse_with_timezone;
-use regex::escape;
 use regex::RegexBuilder;
+use regex::escape;
 
 use fimfareader::error::Error;
 use fimfareader::error::Result;
